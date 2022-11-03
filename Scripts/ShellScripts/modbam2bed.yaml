@@ -1,0 +1,11 @@
+modbam2bed \
+--extended \
+--mod_base 5mC \
+--region chr10:131264000-131270000 \
+--cpg \
+--canon_threshold 0.25 \
+--mod_threshold 0.75 \
+/encrypteddata/MGMT/Reference/Chrom10.fasta \
+/encrypteddata/MGMT/mgmt_retest_01082022/results/t21-240/5hmc/mod_mappings.5mC.sorted.bam \
+> /encrypteddata/MGMT/mgmt_retest_01082022/results/t21-240/5hmc/Aggregated_calls.csv
+

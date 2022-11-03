@@ -1,0 +1,287 @@
+---
+title: "Nanopore sequencing to analyse MGMT promoter methylation"
+author: "Skarphedinn Halldorsson"
+date: "Compiled on `r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document
+  # pdf_document:
+  #   latex_engine: xelatex
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+## Introduction
+
+MGMT promoter methylation is an important diagnostic factor for glioblastoma treatment. Methylation on a CpG island in the MGMT promoter region predicts response to the alkylating agent temozolomide. MGMT promoter methylation is typically assessed by methylation specific PCR (MSP) of the first exon of MGMT or pyrosequencing of 4 CpG sites in the first exon. Both methods rely on bisulphate treatment of DNA prior to analysis. Nanopore sequencing allows methylation calling on native, genomic DNA. This circumvents the need for bisulphate treatment of DNA prior to sequencing and allows methylation analysis of far larger sequencing than either MSP or pyrosequencing.
+
+```{r Promoter, echo=FALSE, out.width="100%", fig.cap="Organization of the MGMT promoter. MSP refers to the typical primer sites of methylation specific PCR to determine MGMT promoter methylation. Asterixes represent the 4 CpGs analysed by the Qiagen MGMT pyrosequencing kit."}
+
+knitr::include_graphics("Figures/MGMT_promoter_region.png")
+```
+
+Here, we present the results of nanopore sequencing of the whole CpG island in the promoter region of the MGMT gene. We gathered nanopore sequencing data of the MGMT promoter region from 148 patients, including 130 glioblastoma patients. Results were produced either by CRISPR/Cas9 targeted sequencing of the MGMT promoter region or as part of an adaptive sampling panel (RAPID-CNS). Samples were obtained from three separate cohorts: the DenStem project at Institute for Surgical Research, the glioblastoma DNA biobank at Radium Hospital and Rapid-CNS. Cas9 targeted sequencing samples were either run as single samples or as 5 barcoded samples run simultaneously. An overview of samples can be seen in Table 1.
+
+
+```{r MGMT_stats, echo=FALSE}
+load("Data/DotplotData.RData")
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(janitor)
+library(kableExtra)
+
+MGMT_RunSum <- MGMT_RunSum %>% filter(Comment != "Fail")
+
+MGMT_RunSum <- MGMT_RunSum %>% 
+  mutate(Hits_ratio = 100*On_target_seqs/Read_number) %>% 
+  filter(Comment != "Fail" & On_target_seqs > 1) %>% 
+  group_by(Series) %>% 
+  mutate(Series_median=median(On_target_seqs)) %>% 
+  group_by(Comment) %>% 
+  mutate(Comment_median=median(On_target_seqs)) %>%
+  group_by(Series,Comment) %>%
+  mutate(Series_Comment_median=median(On_target_seqs)) %>%
+  group_by(Series,Comment) %>% 
+  mutate(Series_Comment_mean=mean(On_target_seqs)) %>% 
+  group_by(Pyro_Methylation_Status) %>% 
+  mutate(Reads_per_status_median = median(On_target_seqs)) %>%
+  group_by(Series,Pyro_Methylation_Status)%>%
+  mutate(Reads_per_status_series_median = median(On_target_seqs))%>% 
+  filter(Pyro_Methylation_Status != "Unknown")
+
+MGMT_RunSum$Series_Comment_mean <- as.numeric(round(MGMT_RunSum$Series_Comment_mean,1))
+MGMT_RunSum$Reads_per_status_series_median <- as.numeric(round(MGMT_RunSum$Reads_per_status_series_median,1))
+
+MGMT_RunSum$Series <- gsub("Radium1","Radium",MGMT_RunSum$Series)
+MGMT_RunSum$Series <- gsub("Radium2","Radium",MGMT_RunSum$Series)
+MGMT_RunSum$Comment <- gsub("barcoded","Barcoded",MGMT_RunSum$Comment)
+
+Table <- MGMT_RunSum %>% 
+  select(Sample_ID,Series,Diagnosis) %>% 
+  distinct() %>% 
+  group_by(Series,Diagnosis) %>% 
+  tally() %>% 
+  spread(Diagnosis,n) %>% 
+  replace(is.na(.), 0) %>%
+  adorn_totals("row")
+```
+
+```{r Sample_overview, echo=FALSE}
+
+knitr::kable(Table,align = "lccccccc", format="html", booktabs=TRUE, caption = "Overview of samples included in this study") %>% kable_styling(latex_options="scale_down")
+#knitr::kable(Table,align = "lccccccc", format="latex", booktabs=TRUE, caption = "Overview of samples included in this study") %>% kable_styling(latex_options="scale_down")
+
+```
+
+## Data acquisition
+
+Figures 2 and 3 show the sequencing depth of samples in this study. Figure 2 shows that there is no implicit bias between methylated versus unmethylated samples when it comes to sequencing depth. Figure 3 shows that the range of depth is large. Single sample runs produce more sequences than barcoded runs, adaptive sampling similar sequencing depth as barcoded Cas9 targeted samples.
+
+```{r Coverage_Method, echo=FALSE, fig.cap="Sequencing depth of samples by method of acquisition, group median represented by red diamond. No bias in sequence depth observed between methylated and unmethylated samples."}
+# Distribution of hits in RIO by Methylation status and sequencing method
+ggplot(MGMT_RunSum, aes(x=Comment, y=On_target_seqs))+
+  geom_point(size = 5, position = position_jitterdodge(0.2,0), alpha = 0.6, aes(color=Pyro_Methylation_Status))+
+  scale_color_viridis_d(name="Mehtylation Status")+
+  scale_fill_discrete(guide="none")+
+  stat_summary(fun=median, geom="point", shape=18, size=6, color="red",position = position_dodge(0.8), aes(fill=Pyro_Methylation_Status),name = "")+
+  #ylim(0,125)+
+  #scale_y_break(c(150, 250)) +
+  scale_y_log10()+
+  xlab ("")+
+  ylab("Sequence depth") +
+  theme_bw(base_size = 14) + theme(axis.text.x = element_text(angle = 45, hjust=1))
+```
+
+```{r Coverage_Dataset, echo=FALSE, fig.cap="Sequencing depth of methods, group median represented by red diamond. Single sample runs generally have higher sequence depth than barcoded samples or adaptive sampling."}
+ggplot(MGMT_RunSum, aes(x=Series, y=On_target_seqs))+
+  geom_point(size = 5, position = position_jitterdodge(0.2,0), alpha = 0.6, aes(color=Comment)) +
+  stat_summary(fun=median, geom="point", shape=18, size=6, color="red",position = position_dodge(0.8), aes(fill=Comment),name = "")+
+  scale_color_viridis_d(name="Method")+
+  scale_fill_discrete(guide="none")+
+  labs(fill = "", color = "Method")+
+  scale_color_viridis_d()+
+  scale_y_log10()+
+  xlab ("")+
+  ylab("Sequence depth") +
+  theme_bw(base_size = 14) + theme(axis.text.x = element_text(angle = 45, hjust=1))
+```
+
+## Direct comparison of Nanopore sequencing and Pyrosequencing
+
+At the Norwegian University hospital, MGMT promoter methylation is determined by the Qiagen MGMT pyrosequencing kit. Results are typically presented as an avererage methylation percentage across the four CpGs detected by the kit. A cut-off value of 9% determines if a given sample is classified as "methylated" or "unmethylated". We currently have average methylation values for the DenStem samples and the Radium samples (Figure 4). 
+```{r Compare_Group, echo=FALSE, out.width="100%", fig.width=10, fig.height=5, fig.cap="Comparison of nanopore sequencing and Pyrosequencing results of 4 CpGs in exon 1 of the MGMT promoter. Plotted values are average methylation of 4 CpGs. Black horizontal and vertical lines mark the 9 percent cut-off value between methylated and unmethylated samples, as determined by pyrosequencing."}
+library(ggpubr)
+ggplot(Compare_CpGs_GROUP, aes(x=Pyro_4_CpG_average, y=Nano_4_CpG_average, color = DataSet)) +
+  geom_smooth(method = "lm", color="black") +
+  geom_point(aes(size=Coverage), alpha = 0.6)+
+  stat_regline_equation(label.y = 2, label.x = 6,aes(label = ..rr.label..),color = "black", size=4)+
+  scale_color_brewer(palette = "Set1", guide="none")+
+  scale_size_continuous(name="Depth",breaks = c(5,10,50,100,850), range = c(1,16) )+
+  xlab("Pyro sequencing")+
+  ylab("Nanopore sequencing")+
+  geom_hline(yintercept = 9)+
+  geom_vline(xintercept = 9)+
+  scale_y_sqrt(breaks=c(10,25,50,75,100))+
+  scale_x_sqrt(breaks=c(10,25,50,75,100))+
+  facet_wrap(.~DataSet)+
+  theme_bw()
+```
+
+Plotting the average methylation percentage acquired via Nanopore sequencing against the values acquired by pyrosequencing shows reasonable correlation between the two methods, particularly for the Radium samples (R^2^=0.85). It should be noted that the DenStem results are from the same tumor but not the same biopsy (one biopsy for nanopore, another biopsy for pyrosequencing) while the Radium samples are from the same biopsy (same biopsy analysed by nanopore sequencing and pyrosequencing). This is a likely explanation of why the correlation between nanopore sequencing and pyrosequencing is lower in this cohort. This also raises the question of heterogeneity of methylation status throughout a tumor entity, especially if methylation % is close to the cut-off value. Would a different biopsy have slightly higher or lower methylation values that might classify the tumor differently? I don't think the DenStem samples presented here can really answer that as they were analysed by different methods but it's worth a thought.
+
+There appears to be a certain level of over-prediction of methylation % by nanopore sequencing compared to the pyrosequencing results, particularly in low methylation samples. This means that the % methylated cut-off value for nanopore sequencing is higher than the 9 % methylated threshold that is applied for pyrosequencing. These results only apply for the 4 CpGs sequenced by the Qiagen MGMT pyrosequencing kit. It should also be notet that % methylated values in very low coverage samples are unreliable.
+
+
+```{r Compare_Individual, echo=FALSE, out.width="100%", fig.cap="Comparison of individual CpGs within exon 1" }
+ggplot(Compare_CpGs, aes(x=Pyro, y=Nano, color = Pos))+
+  geom_smooth(method = lm, color="black")+
+  stat_regline_equation(label.y = 2, label.x = 6,aes(label = ..rr.label..),color = "black")+
+  geom_point(aes(size=On_target_seqs), alpha = 0.6)+
+  scale_size_continuous(name="Depth",breaks = c(5,15,25,100,150), range = c(1,8))+
+  # geom_hline(yintercept = 10)+
+  # geom_vline(xintercept = 10)+
+  xlab("Pyro sequencing")+
+  ylab("Nanopore sequencing")+
+  theme_bw()+
+    scale_color_brewer(palette = "Set2", guide="none")+
+  scale_y_sqrt(breaks=c(10,25,50,75,100))+
+  scale_x_sqrt(breaks=c(10,25,50,75,100))+
+  facet_wrap(.~Pos)
+
+```
+
+We also have separate methylation percentage values for the four CpGs analysed by the Qiagen MGMT pyrosequencing kit for all the Radium samples. This affords a site by site comparison between nanopore sequencing and pyrosequencing (Figure 5). The correlation between nanopore and pyrosequencing is slightly less for the individual CpGs a difference that appears to be rounded out when the values are averaged (Figure 4, Radium).
+
+Take together, nanopore sequencing of the same 4 CpGs analysed by the Qiagen MGMT pyrosequencing kit does a reasonable job of recreating the pyrosequencing results. However, this does not take advantage of the other 94+ CpGs that are included in the nanopore data.
+
+## Unsupervised clustering of nanopore results
+
+```{r Corrolation_plot, echo=FALSE, eval=FALSE}
+library(corrplot)
+Metsum_ROI_long <- read.csv("Data/Metsum_ROI_long.csv", header = T, row.names = 1)
+colnames(Metsum_ROI_long) <- c(-7:-1, 1:98,c("+1","+2", "+3","+4", "+5", "+6", "+7", "+8", "+9", "+10"))
+
+# correlation of CpGs
+corrplot(cor(Metsum_ROI_long), 
+         method = "color",
+         order = "original",
+         #hclust.method = "ward.D",
+         tl.cex = 0.4,
+         tl.col = 'black')
+```
+
+```{r Heatmap, echo=FALSE,  out.width="100%", out.height="120%", fig.cap="Clustered heatmap of all samples based on nanopore sequencing of CpG island of the MGMT promoter"}
+
+Metsum_ROI_long <- read.csv("Data/Metsum_ROI_long.csv", header = T, row.names = 1)
+colnames(Metsum_ROI_long) <- c(-7:-1, 1:98,c("+1","+2", "+3","+4", "+5", "+6", "+7", "+8", "+9", "+10"))
+load("Data/Annotations.Rdata")
+
+library(pheatmap)
+library(grid)
+library(RColorBrewer)
+
+Metsum_ROI_long_ISLAND <- Metsum_ROI_long[c(2:nrow(Metsum_ROI_long)),c(8:105)]
+
+pheatmap(Metsum_ROI_long_ISLAND,
+         cluster_rows = T, 
+         cluster_cols = F,
+         clustering_method = "ward.D",
+         cutree_rows = 2,
+         treeheight_row = 20,
+         border_color = NA,
+         scale = "none",
+         drop_levels = T,
+         color = rev(brewer.pal(n = 10, name = "Spectral")),
+         fontsize_col = 4,
+         fontsize_row = 4,
+         fontsize = 6,
+         legend = T,
+         show_rownames = F,
+         legend_breaks = seq(0,100,10),
+          annotation_col = mat_col,
+          annotation_row = row_anno,
+         annotation_colors = ann_colors,
+         main = "All samples,  (n=145)",
+         legend_labels = c("0%","10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%")
+         )
+
+```
+Unsupervised clustering of all the samples included in the study shows very clear separation of methylated and unmethylated samples (Figure 6). The samples previously defined as unmethylated have very low methylation throughout the CpG island apart from the first 5 CpGs that are often methylated. Samples previously defined as methylated have a gradient of methylation which tends to show highest methylation values towards either end of the CpG island. Only six samples samples do not cluster according to their previously determined methylation status. Four of these samples belong to the DenStem cohort that is not directly comparable, as previously mentioned. A single sample from the Radium cohort was classified as methylated by pyrosequencing but clusters with the unmethylated samples. This sample is interesting as it has robust methylation in the fist exon but very low methylation elsewhere in the CpG island.
+
+We can also look at methylation patterns specifically in the glioblastoma samples (Table 1). 
+
+```{r HeatmapGBM, echo=FALSE,  out.width="100%", out.height="120%", fig.cap="Heatmap showing unsupervised clustering of glioblastoma samples based on nanopore sequencing of the CpG island in the MGMT promoter"}
+
+GBMs <- MGMT_RunSum %>% select(Sample_ID,Diagnosis) %>% filter(Diagnosis == "Glioblastoma") %>% distinct()
+
+Metsum_ROI_long_GBM <- na.omit(Metsum_ROI_long_ISLAND[GBMs$Sample_ID,])
+
+pheatmap(Metsum_ROI_long_GBM,
+         cluster_rows = T, 
+         cluster_cols = F,
+         clustering_method = "ward.D",
+         cutree_rows = 4,
+         scale = "none",
+         border_color = NA,
+         color = rev(brewer.pal(n = 10, name = "Spectral")),
+         fontsize = 6,
+         fontsize_col = 4,
+         fontsize_row = 4,
+        #  kmeans_k = 6,
+         show_rownames = F,
+         treeheight_row = 20,
+         legend = T,
+         legend_breaks = seq(0,100,10),
+         annotation_col = mat_col,
+        # angle_col = 45,
+         annotation_row = row_anno,
+         annotation_colors = ann_colors,
+         main = "Glioblastoma samples ONLY (n=127)",
+         legend_labels = c("0%","10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%")
+)
+
+
+```
+
+In Figure 7 we see that all of the Rapid-CNS GBM samples fall within their previously determined classes and only one of the Radium samples is "mis-classified". We also see there are clusters within both the methylated and unmethylated samples. These clusters can also be represented by mean methylation values within each cluster (Figure 8). 
+
+```{r Kmeans, echo=FALSE,  out.width="100%", out.height="120%", fig.cap="K-means clustering of glioblastoma samples"}
+GBMs <- MGMT_RunSum %>% select(Sample_ID,Diagnosis) %>% filter(Diagnosis == "Glioblastoma") %>% distinct()
+
+Metsum_ROI_long_GBM <- na.omit(Metsum_ROI_long_ISLAND[GBMs$Sample_ID,])
+
+pheatmap(Metsum_ROI_long_GBM,
+         cluster_rows = T, 
+         cluster_cols = F,
+         clustering_method = "ward.D",
+         cutree_rows = 2,
+         scale = "none",
+         border_color = NA,
+         color = rev(brewer.pal(n = 10, name = "Spectral")),
+         fontsize = 6,
+         fontsize_col = 4,
+         fontsize_row = 4,
+          kmeans_k = 4,
+         show_rownames = F,
+         treeheight_row = 10,
+         legend = T,
+         legend_breaks = seq(0,100,10),
+         annotation_col = mat_col,
+        # angle_col = 45,
+        # annotation_row = row_anno,
+         #annotation_colors = ann_colors,
+        # main = "Glioblastoma samples ONLY (n=127)",
+         legend_labels = c("0%","10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%")
+)
+```
+
+
+## Discussion
+
+We have a fairly extensive dataset already, I've not seen data with this many samples that looks at methylation within the whole CpG island of MGMT. We have the option of looking for CpG methylation further upstream and downstream than the 98 CpG presented here, at least 10 CpGs in both directions without losing any samples due to lack of coverage. By focusing on high depth samples we can look much further. I have not included that here but will be looking into it and will report if I find anything interesting.
+
+I think it will be very interesting to see if there is a difference in patient outcome between the clusters we see.
+

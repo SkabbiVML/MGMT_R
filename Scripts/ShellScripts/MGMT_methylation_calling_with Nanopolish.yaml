@@ -1,0 +1,40 @@
+Methylation calling with nanopolish
+
+All fast5 files should be in a folder as single reads. Large fast5 files can be unpackaged with ont_fast5_api (in python):
+
+$ conda activate
+
+(base)$ multi_to_single_fast5 --input_path ~/path/to/BIG.fast5 --save_path ~/path/to/directory --recursive
+
+Basecalled sequences can be in a single file (Basecalled.fastq)
+
+Refernce genome as fasta. for MGMT we only need chromosome 10. saved as reference.fasta
+
+=====================================================
+
+1. Indexing
+
+$ nanopolish index -d path/to/fast5 path/to/BaseCalled.fastq
+
+2. Alignment to reference genome
+
+$ minimap2 -a -x map-ont ~/MGMT/TEST/reference.fasta path/to/BaseCalled.fastq | samtools sort -T tmp -o BaseCalled.sorted.bam
+
+3. Indexing
+
+$ samtools index BaseCalled.sorted.bam
+
+4. Methylation calling
+
+$ nanopolish call-methylation -t 8 -r path/to/BaseCalled.fastq -b BaseCalled.sorted.bam -g ~/path/to/reference.fasta -w "chr10:131,000,000-132,000,000" > samplename_Methylation.tsv
+
+5. Summarizing methylation results
+
+$ ~/MGMT/nanopolish/scripts/calculate_methylation_frequency.py samplename_Methylation.tsv > Summarized_methylation_samplename.tsv
+
+=======================
+
+for quick visualization
+
+$ methplotlib -m methylation_calls_file.tsv -n SampleName -w "chr10:131,264,955-131,271,868" --dotsize 10 --binary
+
