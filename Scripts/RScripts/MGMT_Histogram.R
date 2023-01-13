@@ -29,3 +29,8 @@ ggplot(t3, aes(x=CumMeth, fill=Known_status)) +
 
 # rough box plot
 ggplot(t3, aes(y=CumMeth, x=Known_status, fill=Series)) + geom_boxplot()
+
+# rough dotplot
+ggplot(t3, aes(y=CumMeth, x=Known_status, fill=Series, color=Series, group=Series)) + 
+  geom_point(position = position_dodge(width = .5))+
+  geom_text(aes(label=SampleID))
