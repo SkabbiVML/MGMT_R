@@ -227,10 +227,12 @@ ggplot(p, aes(x=Pyro_Methylation_Status, y=Average_Methylation, color = Series))
   geom_beeswarm(aes(size = On_target_seqs), alpha = 0.6, cex=3)+
   scale_size_continuous(name="Depth",breaks = c(5,10,50,100), range = c(1,10) )+
   scale_color_brewer(palette = "Set1", guide="none")+
-  xlab("Classification by pyrosequencing")+
+  xlab("Known methylation status")+
   ylab("Average methylation per nanopore")+
   facet_grid(.~Series)+
-  theme_bw()
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust=1), aspect.ratio = 2.5)
+
 ```
 ```{r Concordance, echo=FALSE}
 knitr::kable(p2)
