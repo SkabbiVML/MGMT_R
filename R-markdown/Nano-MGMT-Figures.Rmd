@@ -4,14 +4,14 @@ SUbtitle: "Figures and data transformation"
 author: "Skarphedinn Halldorsson"
 date: "Compiled on `r format(Sys.time(), '%d %B, %Y')`"
 output:
-  word_document:
-    toc: no
-    toc_depth: '3'
   pdf_document:
     latex_engine: pdflatex
     extra_dependencies: subfig, float
     number_sections: yes
     toc: no
+  word_document:
+    toc: no
+    toc_depth: '3'
   html_document:
     toc: yes
     toc_depth: '3'
@@ -52,7 +52,6 @@ knitr::opts_chunk$set(dpi = 100,
 knitr::include_graphics("Figures/MGMT_promoter_region.png")
 ```
 
-Here, we present the results of nanopore sequencing of the whole CpG island in the promoter region of the MGMT gene. We gathered nanopore sequencing data of the MGMT promoter region from 148 patients, including 130 glioblastoma patients. Results were produced either by CRISPR/Cas9 targeted sequencing of the MGMT promoter region or as part of an adaptive sampling panel (RAPID-CNS). Samples were obtained from three separate cohorts: the DenStem project at Institute for Surgical Research, the glioblastoma DNA biobank at Radium Hospital and Rapid-CNS. Cas9 targeted sequencing samples were either run as single samples or as 5 barcoded samples run simultaneously. An overview of samples can be seen in Table 1.
 
 ```{r MGMT_stats, echo=FALSE}
 load("Data/DotplotData.RData")
@@ -61,6 +60,7 @@ library(dplyr)
 library(tidyr)
 library(janitor)
 library(kableExtra)
+library(RColorBrewer)
 
 
 Table <- MGMT_RunSum %>% 
@@ -71,7 +71,7 @@ Table <- MGMT_RunSum %>%
   spread(Diagnosis,n) %>% 
   replace(is.na(.), 0) %>%
   adorn_totals("row") %>%
- # mutate(Other = rowSums(select(.,c(ATRT_SHH, Ganglioglioma, HPC, Medulloblastoma, PCNSL, PXA, Unknown)))) %>%
+  mutate(Other = rowSums(select(.,c(ATRT_SHH, Ganglioglioma, HPC, Medulloblastoma, PCNSL, PXA, Unknown)))) %>%
   select(c(Series,Astrocytoma,`Astrocytoma HG`, Glioblastoma, LGG_PA,Meningioma, Metastasis, Oligodendroglioma,Other))
 
 
@@ -98,7 +98,9 @@ ggplot(MGMT_RunSum, aes(y=Diagnosis, fill=Pyro_Methylation_Status))+
 
 ```
 
-```{r, Methylation_overview_simplified, out.width="100%", fig.cap="Distribution of methylated versus unmethylated samples according to known status prior to nanopore sequencing"}
+Also simplified version
+
+```{r Methylation_overview_simplified, echo=FALSE, out.width="100%", fig.cap="Distribution of methylated versus unmethylated samples according to known status prior to nanopore sequencing"}
 barplot_data <- MGMT_RunSum %>% select(c(Sample_ID, Diagnosis, Pyro_Methylation_Status)) %>%
   distinct() %>% 
   group_by(Diagnosis, Pyro_Methylation_Status) %>% 
@@ -110,28 +112,28 @@ barplot_data <- MGMT_RunSum %>% select(c(Sample_ID, Diagnosis, Pyro_Methylation_
   select(c(Pyro_Methylation_Status,'IDH-glioma', Glioblastoma, Other)) %>%
   gather(key=Diagnosis, value = Samples, -Pyro_Methylation_Status)
 
+
 barplot_data$Diagnosis <- factor(barplot_data$Diagnosis, levels = c("Other",'IDH-glioma',"Glioblastoma" ))
 
 ggplot(barplot_data, aes(y=Diagnosis, x= Samples, fill=Pyro_Methylation_Status, label = Samples))+
   geom_bar(stat = "identity")+
   scale_fill_brewer(name="Known Methylation Status", palette="Set1")+
-  geom_text(size = 5, position = position_stack(vjust = 0.5))+
-  theme_bw(base_size = 22)+
-  theme(legend.position = "top", )
+  geom_text(size = 3, position = position_stack(vjust = 0.5))+
+  theme_bw(base_size = 10)+
+  theme(legend.position = "top", aspect.ratio = 0.3 )
 ```
 
 
 ## Data acquisition
 
-Figures 3 and 4 show the sequencing depth of samples in this study. Figure 3 shows that there is no implicit bias between methylated versus unmethylated samples when it comes to sequencing depth. Figure 3 shows that the range of depth is large. Single sample runs produce more sequences than barcoded runs, adaptive sampling similar sequencing depth as barcoded Cas9 targeted samples.
-
 ```{r Coverage_Method, echo=FALSE, fig.cap="Sequencing depth of samples by method of acquisition, group median represented by red diamond. No bias in sequence depth observed between methylated and unmethylated samples."}
 # Distribution of hits in RIO by Methylation status and sequencing method
 ggplot(MGMT_RunSum, aes(x=Comment, y=On_target_seqs))+
   geom_point(size = 5, position = position_jitterdodge(0.2,0), alpha = 0.6, aes(color=Pyro_Methylation_Status))+
-  scale_color_viridis_d(name="Mehtylation Status")+
+  scale_color_brewer(name="Methylation Status", palette = "Set1")+
   scale_fill_discrete(guide="none")+
-  stat_summary(fun=median, geom="point", shape=18, size=6, color="red",position = position_dodge(0.8), aes(fill=Pyro_Methylation_Status),name = "")+
+   scale_x_discrete(labels = c("Adaptive", "Barcoded", "Single"))+
+  stat_summary(fun=median, geom="point", shape= "-", size=18, color="black",alpha = 0.8,position = position_dodge(0.8), aes(fill=Pyro_Methylation_Status))+
   #ylim(0,125)+
   #scale_y_break(c(150, 250)) +
   scale_y_log10()+
@@ -143,7 +145,7 @@ ggplot(MGMT_RunSum, aes(x=Comment, y=On_target_seqs))+
 ```{r Coverage_Dataset, echo=FALSE, fig.cap="Sequencing depth of methods, group median represented by red diamond. Single sample runs generally have higher sequence depth than barcoded samples or adaptive sampling."}
 ggplot(MGMT_RunSum, aes(x=Series, y=On_target_seqs))+
   geom_point(size = 5, position = position_jitterdodge(0.2,0), alpha = 0.6, aes(color=Comment)) +
-  stat_summary(fun=median, geom="point", shape=18, size=6, color="red",position = position_dodge(0.8), aes(fill=Comment),name = "")+
+  stat_summary(fun=median, geom="point", shape="-", size=18, color="black",alpha = 0.8,position = position_dodge(0.8), aes(fill=Comment))+
   scale_color_viridis_d(name="Method")+
   scale_fill_discrete(guide="none")+
   labs(fill = "", color = "Method")+
@@ -156,8 +158,7 @@ ggplot(MGMT_RunSum, aes(x=Series, y=On_target_seqs))+
 
 ## Direct comparison of Nanopore sequencing and Pyrosequencing
 
-At the Norwegian University hospital, MGMT promoter methylation is determined by the Qiagen MGMT pyrosequencing kit. Results are typically presented as an avererage methylation percentage across the four CpGs detected by the kit. A cut-off value of 9% determines if a given sample is classified as "methylated" or "unmethylated". We currently have average methylation values for the DenStem samples and the Radium samples (Figure 5).
-
+Group average as measured by nanopore and pyrosequencing
 ```{r Compare_Group, echo=FALSE, out.width="100%", fig.width=10, fig.height=5, fig.cap="Comparison of nanopore sequencing and Pyrosequencing results of 4 CpGs in exon 1 of the MGMT promoter. Plotted values are average methylation of 4 CpGs. Black horizontal and vertical lines mark the 9 percent cut-off value between methylated and unmethylated samples, as determined by pyrosequencing."}
 library(ggpubr)
 ggplot(Compare_CpGs_GROUP, aes(x=Pyro_4_CpG_average, y=Nano_4_CpG_average, color = DataSet)) +
@@ -170,15 +171,14 @@ ggplot(Compare_CpGs_GROUP, aes(x=Pyro_4_CpG_average, y=Nano_4_CpG_average, color
   ylab("Nanopore sequencing")+
   geom_hline(yintercept = 9)+
   geom_vline(xintercept = 9)+
-  scale_y_sqrt(breaks=c(10,25,50,75,100))+
-  scale_x_sqrt(breaks=c(10,25,50,75,100))+
+  # scale_y_sqrt(breaks=c(10,25,50,75,100))+
+  # scale_x_sqrt(breaks=c(10,25,50,75,100))+
+  
   facet_wrap(.~DataSet)+
   theme_bw()
 ```
 
-Plotting the average methylation percentage acquired via Nanopore sequencing against the values acquired by pyrosequencing shows reasonable correlation between the two methods, particularly for the Radium samples (R^2^=0.85). It should be noted that the DenStem results are from the same tumor but not the same biopsy (one biopsy for nanopore, another biopsy for pyrosequencing) while the Radium samples are from the same biopsy (same biopsy analysed by nanopore sequencing and pyrosequencing). This is a likely explanation of why the correlation between nanopore sequencing and pyrosequencing is lower in this cohort. This also raises the question of heterogeneity of methylation status throughout a tumor entity, especially if methylation % is close to the cut-off value. Would a different biopsy have slightly higher or lower methylation values that might classify the tumor differently? I don't think the DenStem samples presented here can really answer that as they were analysed by different methods but it's worth a thought.
-
-There appears to be a certain level of over-prediction of methylation % by nanopore sequencing compared to the pyrosequencing results, particularly in low methylation samples. This means that the % methylated cut-off value for nanopore sequencing is higher than the 9 % methylated threshold that is applied for pyrosequencing. These results only apply for the 4 CpGs sequenced by the Qiagen MGMT pyrosequencing kit. It should also be notet that % methylated values in very low coverage samples are unreliable.
+Comparison of individual CpGs as measured by nanopore and pyrosequencing
 
 ```{r Compare_Individual, echo=FALSE, out.width="100%", fig.cap="Comparison of individual CpGs within exon 1" }
 ggplot(Compare_CpGs, aes(x=Pyro, y=Nano, color = Pos))+
@@ -192,17 +192,15 @@ ggplot(Compare_CpGs, aes(x=Pyro, y=Nano, color = Pos))+
   ylab("Nanopore sequencing")+
   theme_bw()+
     scale_color_brewer(palette = "Set2", guide="none")+
-  scale_y_sqrt(breaks=c(10,25,50,75,100))+
-  scale_x_sqrt(breaks=c(10,25,50,75,100))+
+  # scale_y_sqrt(breaks=c(10,25,50,75,100))+
+  # scale_x_sqrt(breaks=c(10,25,50,75,100))+
   facet_wrap(.~Pos)
 
 ```
 
-We also have separate methylation percentage values for the four CpGs analysed by the Qiagen MGMT pyrosequencing kit for all the Radium samples. This affords a site by site comparison between nanopore sequencing and pyrosequencing (Figure 6). The correlation between nanopore and pyrosequencing is slightly less for the individual CpGs a difference that appears to be rounded out when the values are averaged (Figure 5, Radium).
+Use 4 CpG sites (methylation cutoff 9%) to classify all samples, compared to known status
 
-Take together, nanopore sequencing of the same 4 CpGs analysed by the Qiagen MGMT pyrosequencing kit does a reasonable job of recreating the pyrosequencing results. However, this does not take advantage of the other 94+ CpGs that are included in the nanopore data.
-
-```{r BeeSwarm, echo=FALSE, out.width=100%,fig.cap="Average nanopore sequencing percentage of CpGs 76-79 agains the Pyrosequencing classification"}
+```{r BeeSwarm, echo=FALSE, out.width="100%",fig.cap="Average nanopore sequencing percentage of CpGs 76-79 agains the Pyrosequencing classification"}
 
 library(ggbeeswarm)
 
