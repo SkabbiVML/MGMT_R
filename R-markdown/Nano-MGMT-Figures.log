@@ -1,11 +1,11 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.12.14)  19 JAN 2023 16:29
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2023.1.20)  20 JAN 2023 15:44
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
 **Nano-MGMT-Figures.tex
 (./Nano-MGMT-Figures.tex
 LaTeX2e <2022-11-01> patch level 1
-L3 programming layer <2022-11-02> (c:/Users/skabb/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/base/article.cls
+L3 programming layer <2023-01-16> (c:/Users/skabb/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/base/article.cls
 Document Class: article 2022/07/02 v1.4n Standard LaTeX document class
 (c:/Users/skabb/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/base/size10.clo
 File: size10.clo 2022/07/02 v1.4n Standard LaTeX file (size option)
@@ -514,7 +514,7 @@ Package: makecell 2009/08/03 V0.1e Managing of Tab Column Heads and Cells
 \c@nlinenum=\count320
 \TeXr@lab=\toks34
 ) (c:/Users/skabb/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
-File: l3backend-pdftex.def 2022-10-26 L3 backend support: PDF output (pdfTeX)
+File: l3backend-pdftex.def 2023-01-16 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count321
 \l__pdf_internal_box=\box73
 ) (./Nano-MGMT-Figures.aux
@@ -661,48 +661,53 @@ File: Figures/Coverage_Dataset-1.pdf Graphic file (type pdf)
 <use Figures/Coverage_Dataset-1.pdf>
 Package pdftex.def Info: Figures/Coverage_Dataset-1.pdf  used on input line 185.
 (pdftex.def)             Requested size: 234.88023pt x 234.88023pt.
-<Figures/Compare_Group-1.pdf, id=60, 722.7pt x 361.35pt>
-File: Figures/Compare_Group-1.pdf Graphic file (type pdf)
-<use Figures/Compare_Group-1.pdf>
-Package pdftex.def Info: Figures/Compare_Group-1.pdf  used on input line 200.
-(pdftex.def)             Requested size: 469.76045pt x 234.88023pt.
-<Figures/Compare_Individual-1.pdf, id=61, 361.35pt x 361.35pt>
+<Figures/Compare_Individual-1.pdf, id=60, 361.35pt x 361.35pt>
 File: Figures/Compare_Individual-1.pdf Graphic file (type pdf)
 <use Figures/Compare_Individual-1.pdf>
-Package pdftex.def Info: Figures/Compare_Individual-1.pdf  used on input line 211.
+Package pdftex.def Info: Figures/Compare_Individual-1.pdf  used on input line 200.
 (pdftex.def)             Requested size: 361.34912pt x 361.34912pt.
+<Figures/Compare_Group-1.pdf, id=61, 722.7pt x 361.35pt>
+File: Figures/Compare_Group-1.pdf Graphic file (type pdf)
+<use Figures/Compare_Group-1.pdf>
+Package pdftex.def Info: Figures/Compare_Group-1.pdf  used on input line 211.
+(pdftex.def)             Requested size: 469.76045pt x 234.88023pt.
 <Figures/BeeSwarm-1.pdf, id=62, 361.35pt x 361.35pt>
 File: Figures/BeeSwarm-1.pdf Graphic file (type pdf)
 <use Figures/BeeSwarm-1.pdf>
 Package pdftex.def Info: Figures/BeeSwarm-1.pdf  used on input line 223.
 (pdftex.def)             Requested size: 361.34912pt x 361.34912pt.
-<Figures/Heatmap-1.pdf, id=63, 361.35pt x 361.35pt>
+<Figures/Cumulative Beeswarm-1.pdf, id=63, 361.35pt x 361.35pt>
+File: Figures/Cumulative Beeswarm-1.pdf Graphic file (type pdf)
+<use Figures/Cumulative Beeswarm-1.pdf>
+Package pdftex.def Info: Figures/Cumulative Beeswarm-1.pdf  used on input line 250.
+(pdftex.def)             Requested size: 361.34912pt x 361.34912pt.
+<Figures/Heatmap-1.pdf, id=64, 361.35pt x 361.35pt>
 File: Figures/Heatmap-1.pdf Graphic file (type pdf)
 <use Figures/Heatmap-1.pdf>
-Package pdftex.def Info: Figures/Heatmap-1.pdf  used on input line 254.
+Package pdftex.def Info: Figures/Heatmap-1.pdf  used on input line 263.
 (pdftex.def)             Requested size: 469.76047pt x 469.76047pt.
-[2 <./Figures/Methylation_overview-1.pdf>] [3 <./Figures/Methylation_overview_simplified-1.pdf>] [4 <./Figures/Coverage_Method-1.pdf> <./Figures/Coverage_Dataset-1.pdf>]
-<Figures/HeatmapGBM-1.pdf, id=113, 361.35pt x 361.35pt>
+[2 <./Figures/Methylation_overview-1.pdf>] [3 <./Figures/Methylation_overview_simplified-1.pdf>] [4 <./Figures/Coverage_Method-1.pdf> <./Figures/Coverage_Dataset-1.pdf>] [5 <./Figures/Compare_Individual-1.pdf>]
+<Figures/HeatmapGBM-1.pdf, id=132, 361.35pt x 361.35pt>
 File: Figures/HeatmapGBM-1.pdf Graphic file (type pdf)
 <use Figures/HeatmapGBM-1.pdf>
-Package pdftex.def Info: Figures/HeatmapGBM-1.pdf  used on input line 281.
+Package pdftex.def Info: Figures/HeatmapGBM-1.pdf  used on input line 290.
 (pdftex.def)             Requested size: 469.76047pt x 469.76047pt.
-<Figures/Kmeans-1.pdf, id=114, 361.35pt x 361.35pt>
+<Figures/Kmeans-1.pdf, id=133, 361.35pt x 361.35pt>
 File: Figures/Kmeans-1.pdf Graphic file (type pdf)
 <use Figures/Kmeans-1.pdf>
-Package pdftex.def Info: Figures/Kmeans-1.pdf  used on input line 296.
+Package pdftex.def Info: Figures/Kmeans-1.pdf  used on input line 305.
 (pdftex.def)             Requested size: 469.76047pt x 469.76047pt.
-<Figures/KaplanMeier-1.pdf, id=115, 361.35pt x 361.35pt>
+<Figures/KaplanMeier-1.pdf, id=134, 361.35pt x 361.35pt>
 File: Figures/KaplanMeier-1.pdf Graphic file (type pdf)
 <use Figures/KaplanMeier-1.pdf>
-Package pdftex.def Info: Figures/KaplanMeier-1.pdf  used on input line 317.
+Package pdftex.def Info: Figures/KaplanMeier-1.pdf  used on input line 326.
 (pdftex.def)             Requested size: 469.76047pt x 469.76047pt.
-<Figures/KaplanMeier-2.pdf, id=116, 361.35pt x 361.35pt>
+<Figures/KaplanMeier-2.pdf, id=135, 361.35pt x 361.35pt>
 File: Figures/KaplanMeier-2.pdf Graphic file (type pdf)
 <use Figures/KaplanMeier-2.pdf>
-Package pdftex.def Info: Figures/KaplanMeier-2.pdf  used on input line 325.
+Package pdftex.def Info: Figures/KaplanMeier-2.pdf  used on input line 334.
 (pdftex.def)             Requested size: 469.76047pt x 469.76047pt.
-[5 <./Figures/Compare_Group-1.pdf>] [6 <./Figures/Compare_Individual-1.pdf>] [7 <./Figures/BeeSwarm-1.pdf>] [8 <./Figures/Heatmap-1.pdf>] [9 <./Figures/HeatmapGBM-1.pdf>] [10 <./Figures/Kmeans-1.pdf>] [11 <./Figures/KaplanMeier-1.pdf>] [12 <./Figures/KaplanMeier-2.pdf>] [13] (./Nano-MGMT-Figures.aux)
+[6 <./Figures/Compare_Group-1.pdf>] [7 <./Figures/BeeSwarm-1.pdf>] [8 <./Figures/Cumulative Beeswarm-1.pdf>] [9 <./Figures/Heatmap-1.pdf>] [10 <./Figures/HeatmapGBM-1.pdf>] [11 <./Figures/Kmeans-1.pdf>] [12 <./Figures/KaplanMeier-1.pdf>] [13 <./Figures/KaplanMeier-2.pdf>] [14] (./Nano-MGMT-Figures.aux)
 
 LaTeX Warning: There were multiply-defined labels.
 
@@ -710,18 +715,18 @@ Package rerunfilecheck Info: File `Nano-MGMT-Figures.out' has not changed.
 (rerunfilecheck)             Checksum: C22A63523E55447892D1D7DA9CDF0640;1689.
  ) 
 Here is how much of TeX's memory you used:
- 15022 strings out of 476928
- 248258 string characters out of 5823313
- 596420 words of memory out of 5000000
- 35952 multiletter control sequences out of 15000+600000
- 514670 words of font info for 67 fonts, out of 8000000 for 9000
+ 15032 strings out of 478051
+ 248520 string characters out of 5839265
+ 1866324 words of memory out of 5000000
+ 34838 multiletter control sequences out of 15000+600000
+ 557698 words of font info for 71 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 72i,11n,79p,470b,476s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,11n,79p,470b,476s stack positions out of 10000i,1000n,20000p,200000b,200000s
 {c:/Users/skabb/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}<c:/Users/skabb/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb><c:/Users/skabb/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb><c:/Users/skabb/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb><c:/Users/skabb/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb><c:/Users/skabb/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb><c:/Users/skabb/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb><c:/Users/skabb/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmro10.pfb>
-Output written on Nano-MGMT-Figures.pdf (13 pages, 653110 bytes).
+Output written on Nano-MGMT-Figures.pdf (14 pages, 667650 bytes).
 PDF statistics:
- 275 PDF objects out of 1000 (max. 8388607)
- 217 compressed objects within 3 object streams
- 44 named destinations out of 1000 (max. 500000)
- 130 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 291 PDF objects out of 1000 (max. 8388607)
+ 230 compressed objects within 3 object streams
+ 46 named destinations out of 1000 (max. 500000)
+ 135 words of extra memory for PDF output out of 10000 (max. 10000000)
 

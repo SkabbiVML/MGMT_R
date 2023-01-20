@@ -18,6 +18,11 @@ row_anno$SampleID <- rownames(row_anno)
 
 t3 <- left_join(t2, row_anno)
 
+coverage <- MGMT_RunSum %>% select(c(Sample_ID,On_target_seqs))
+names(coverage) <- c("Series", "Known_status", "SampleID", "Coverage")
+
+t3 <- left_join(t3, coverage, by="SampleID")
+
 # rough histogram
 ggplot(t3, aes(x=CumMeth, fill=Known_status)) + geom_histogram(binwidth = 10, alpha=.5, position = "identity")
 
@@ -32,5 +37,18 @@ ggplot(t3, aes(y=CumMeth, x=Known_status, fill=Series)) + geom_boxplot()
 
 # rough dotplot
 ggplot(t3, aes(y=CumMeth, x=Known_status, fill=Series, color=Series, group=Series)) + 
-  geom_point(position = position_dodge(width = .5))+
-  geom_text(aes(label=SampleID))
+  geom_point(position = position_dodge(width = .5))
+ # geom_text(aes(label=SampleID))
+
+# Beeswarm based on cumulative methylation
+
+ggplot(t3, aes(x=Known_status.x, y=CumMeth, color = Series.y))+
+  geom_hline(yintercept = 45)+
+  geom_beeswarm(aes(size = Coverage), alpha = 0.6, cex=3)+
+  scale_size_continuous(name="Depth",breaks = c(5,10,50,100), range = c(1,10) )+
+  scale_color_brewer(palette = "Set1", guide="none")+
+  xlab("Known methylation status")+
+  ylab("Cumulative methylation per nanopore")+
+  facet_grid(.~Series.y)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust=1), aspect.ratio = 2.5)
