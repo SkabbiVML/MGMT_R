@@ -334,7 +334,7 @@ library(RColorBrewer)
 
 Metsum_ROI_long_ISLAND <- Metsum_ROI_long[c(2:nrow(Metsum_ROI_long)),c(8:105)]
 
-pheatmap(Metsum_ROI_long_ISLAND,
+res <- pheatmap(Metsum_ROI_long_ISLAND,
          cluster_rows = T, 
          cluster_cols = F,
          clustering_method = "ward.D",
@@ -357,6 +357,7 @@ pheatmap(Metsum_ROI_long_ISLAND,
          legend_labels = c("0%","10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%")
          )
 
+res
 ```
 
 Unsupervised clustering of all the samples included in the study shows very clear separation of methylated and unmethylated samples (Figure 7). The samples previously defined as unmethylated have very low methylation throughout the CpG island apart from the first 5 CpGs that are often methylated. Samples previously defined as methylated have a gradient of methylation which tends to show highest methylation values towards either end of the CpG island. Only six samples samples do not cluster according to their previously determined methylation status. Four of these samples belong to the DenStem cohort that is not directly comparable, as previously mentioned. A single sample from the Radium cohort was classified as methylated by pyrosequencing but clusters with the unmethylated samples. This sample is interesting as it has robust methylation in the fist exon but very low methylation elsewhere in the CpG island.
@@ -369,7 +370,7 @@ GBMs <- MGMT_RunSum %>% select(SampleID,Diagnosis) %>% filter(Diagnosis == "Glio
 
 Metsum_ROI_long_GBM <- na.omit(Metsum_ROI_long_ISLAND[GBMs$SampleID,])
 
-res <- pheatmap(Metsum_ROI_long_GBM,
+ pheatmap(Metsum_ROI_long_GBM,
          cluster_rows = T, 
          cluster_cols = F,
          clustering_method = "ward.D",
@@ -393,7 +394,7 @@ res <- pheatmap(Metsum_ROI_long_GBM,
          legend_labels = c("0%","10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%")
 )
 
-res
+
 
 ```
 
