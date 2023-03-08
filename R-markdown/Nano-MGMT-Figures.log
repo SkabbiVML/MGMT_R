@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2023.1.20)  20 JAN 2023 16:02
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2023.1.20)  8 MAR 2023 12:03
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -717,13 +717,13 @@ Package rerunfilecheck Info: File `Nano-MGMT-Figures.out' has not changed.
 Here is how much of TeX's memory you used:
  15032 strings out of 478051
  248520 string characters out of 5839265
- 1866324 words of memory out of 5000000
+ 1865324 words of memory out of 5000000
  34838 multiletter control sequences out of 15000+600000
  557698 words of font info for 71 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  75i,11n,79p,470b,476s stack positions out of 10000i,1000n,20000p,200000b,200000s
 {c:/Users/skabb/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}<c:/Users/skabb/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb><c:/Users/skabb/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb><c:/Users/skabb/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb><c:/Users/skabb/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb><c:/Users/skabb/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb><c:/Users/skabb/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb><c:/Users/skabb/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmro10.pfb>
-Output written on Nano-MGMT-Figures.pdf (14 pages, 691419 bytes).
+Output written on Nano-MGMT-Figures.pdf (14 pages, 691662 bytes).
 PDF statistics:
  291 PDF objects out of 1000 (max. 8388607)
  230 compressed objects within 3 object streams
