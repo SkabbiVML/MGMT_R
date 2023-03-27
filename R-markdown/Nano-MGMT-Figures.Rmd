@@ -74,6 +74,9 @@ Table <- MGMT_RunSum %>%
   adorn_totals("row") %>%
   mutate(Other = rowSums(select(.,c(ATRT_SHH, Ganglioglioma, HPC, Medulloblastoma, PCNSL, PXA, Unknown)))) %>%
   select(c(Series,Astrocytoma,`Astrocytoma HG`, Glioblastoma, LGG_PA,Meningioma, Metastasis, Oligodendroglioma,Other))
+  adorn_totals("row") 
+  #mutate(Other = rowSums(select(.,c(ATRT_SHH, Ganglioglioma, HPC, Medulloblastoma, PCNSL, PXA, Unknown)))) %>%
+  #select(c(Series,Astrocytoma,`Astrocytoma HG`, Glioblastoma, LGG_PA,Meningioma, Metastasis, Oligodendroglioma,Other))
 
 
 ```
@@ -231,6 +234,7 @@ ggplot(Compare_CpGs_GROUP, aes(x=Pyro_4_CpG_average, y=Nano_4_CpG_average, color
 Use 4 CpG sites (methylation cutoff 9%) to classify all samples, compared to known status
 
 ```{r BeeSwarm, echo=FALSE, out.width="100%",fig.cap="Average nanopore sequencing percentage of CpGs 76-79 agains the Pyrosequencing classification"}
+```{r BeeSwarm, echo=FALSE, out.width="100%", fig.cap="Average nanopore sequencing percentage of CpGs 76-79 agains the Pyrosequencing classification" }
 
 library(ggbeeswarm)
 
