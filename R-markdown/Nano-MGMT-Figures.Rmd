@@ -49,7 +49,7 @@ knitr::opts_chunk$set(dpi = 100,
 ### MGMT Promoter CpG island and methods of evaluation
 ```{r Promoter, echo=FALSE, out.width="100%", fig.cap="Organization of the MGMT promoter. MSP refers to the typical primer sites of methylation specific PCR to determine MGMT promoter methylation. Asterixes represent the 4 CpGs analysed by the Qiagen MGMT pyrosequencing kit."}
 
-knitr::include_graphics("Figures/MGMT_promoter_region.png")
+knitr::include_graphics("MGMT_R/R-markdown/Figures/MGMT_promoter_region.png")
 ```
 
 
@@ -61,8 +61,9 @@ library(tidyr)
 library(janitor)
 library(kableExtra)
 library(RColorBrewer)
+library(scales)
 
-MGMT_RunSum <- read.csv("Data/newRunsum.csv", row.names = 1)
+MGMT_RunSum <- read.csv("MGMT_R/R-markdown/Data/newRunsum.csv", row.names = 1)
 
 Table <- MGMT_RunSum %>% 
   select(SampleID,Series,Diagnosis) %>% 
@@ -111,19 +112,20 @@ barplot_data <- MGMT_RunSum %>% select(c(SampleID, Diagnosis, Known_status)) %>%
   tally() %>%
   spread(Diagnosis,n) %>%
   replace(is.na(.), 0) %>%
-  mutate(Other = rowSums(select(.,c(LGG_PA,ATRT_SHH, Ganglioglioma, HPC, Medulloblastoma, PCNSL, PXA, Meningioma, Metastasis, Unknown)))) %>%
+  mutate(Other = rowSums(select(.,c(LGG_PA,ATRT_SHH, Ganglioglioma, HPC, Medulloblastoma, PCNSL, PXA, Metastasis, Unknown)))) %>%
   mutate('IDH-glioma' = rowSums(select(.,c(Astrocytoma,`Astrocytoma HG`, Oligodendroglioma)))) %>%
-  select(c(Known_status,'IDH-glioma', Glioblastoma, Other)) %>%
+  select(c(Known_status,'IDH-glioma',Meningioma, Glioblastoma, Other)) %>%
   gather(key=Diagnosis, value = Samples, -Known_status)
 
 
-barplot_data$Diagnosis <- factor(barplot_data$Diagnosis, levels = c("Other",'IDH-glioma',"Glioblastoma" ))
+barplot_data$Diagnosis <- factor(barplot_data$Diagnosis, levels = c("Other","Meningioma", 'IDH-glioma',"Glioblastoma" ))
 
 ggplot(barplot_data, aes(y=Diagnosis, x= Samples, fill=Known_status, label = Samples))+
   geom_bar(stat = "identity")+
-  scale_fill_brewer(name="Known Methylation Status", palette="Set1")+
+  scale_fill_brewer(name="Known Status", palette="Set1")+
   geom_text(size = 3, position = position_stack(vjust = 0.5))+
   theme_bw(base_size = 10)+
+  ylab("")+
   theme(legend.position = "top", aspect.ratio = 0.3 )
 ```
 
@@ -133,17 +135,21 @@ ggplot(barplot_data, aes(y=Diagnosis, x= Samples, fill=Known_status, label = Sam
 ```{r Coverage_Method, echo=FALSE, fig.cap="Sequencing depth of samples by method of acquisition, group median represented by red diamond. No bias in sequence depth observed between methylated and unmethylated samples."}
 # Distribution of hits in RIO by Methylation status and sequencing method
 ggplot(MGMT_RunSum, aes(x=Method, y=Depth))+
-  geom_point(size = 5, position = position_jitterdodge(0.2,0), alpha = 0.6, aes(color=Known_status))+
-  scale_color_brewer(name="Known Status", palette = "Set1")+
-  scale_fill_discrete(guide="none")+
-   scale_x_discrete(labels = c("Adaptive", "Barcoded", "Single"))+
-  stat_summary(fun=median, geom="point", shape= "-", size=18, color="black",alpha = 0.8,position = position_dodge(0.8), aes(fill=Known_status))+
+  geom_boxplot(aes(fill=Known_status), alpha = 0.2)+
+  geom_point(size = 3, position = position_jitterdodge(0.2,0), alpha = 0.7, aes(color=Known_status))+
+    scale_color_brewer(name="Known Status", palette = "Set1")+
+  scale_fill_brewer(name="Known Status", palette="Set1")+
+ # scale_fill_discrete(guide="none")+
+   scale_x_discrete(labels = c("Adaptive\nSampling", "Barcoded", "Single"))+
+  # scale_x_discrete(labels = label_wrap(8)) +
+  #stat_summary(fun=median, geom="point", shape= "-", size=14, color="black",alpha = 0.8,position = position_dodge(0.9), aes(fill=Known_status))+
   #ylim(0,125)+
   #scale_y_break(c(150, 250)) +
   scale_y_log10()+
   xlab ("")+
   ylab("Sequence depth") +
-  theme_bw(base_size = 14) + theme(axis.text.x = element_text(angle = 45, hjust=1))
+  theme_bw(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 45, hjust=1))
 ```
 
 ```{r Coverage_Dataset, echo=FALSE, fig.cap="Sequencing depth of methods, group median represented by red diamond. Single sample runs generally have higher sequence depth than barcoded samples or adaptive sampling."}
@@ -168,11 +174,11 @@ Comparison of individual CpGs as measured by nanopore and pyrosequencing
 ```{r Compare_Individual, echo=FALSE, out.width="100%", fig.cap="Comparison of individual CpGs within exon 1" }
 library(ggpubr)
 
-FOUR_CpGs <- read.csv("Data/newFOUR_CPGs.csv", row.names = 1)
+FOUR_CpGs <- read.csv("MGMT_R/R-markdown/Data/newFOUR_CPGs.csv", row.names = 1)
 
 ggplot(FOUR_CpGs, aes(x=Percent_Meth_Pyro, y=Percent_Meth_Nano, color = Pos))+
   geom_smooth(method = lm, color="black")+
-  stat_regline_equation(label.y = 2, label.x = 6,aes(label = ..rr.label..),color = "black")+
+  stat_regline_equation(label.y = 10, label.x = 60,aes(label = ..rr.label..),color = "black")+
   geom_point(aes(size=Depth), alpha = 0.6)+
   scale_size_continuous(name="Depth",breaks = c(5,15,25,100,150), range = c(1,8))+
   # geom_hline(yintercept = 10)+
@@ -190,12 +196,14 @@ ggplot(FOUR_CpGs, aes(x=Percent_Meth_Pyro, y=Percent_Meth_Nano, color = Pos))+
 Group average as measured by nanopore and pyrosequencing
 ```{r Compare_Group, echo=FALSE, out.width="100%", fig.width=10, fig.height=5, fig.cap="Comparison of nanopore sequencing and Pyrosequencing results of 4 CpGs in exon 1 of the MGMT promoter. Plotted values are average methylation of 4 CpGs. Black horizontal and vertical lines mark the 9 percent cut-off value between methylated and unmethylated samples, as determined by pyrosequencing."}
 library(ggpubr)
-Compare_CpGs_GROUP <- read.csv("Data/Compare_CpGs_Group.csv", row.names = 1)
+Compare_CpGs_GROUP <- read.csv("MGMT_R/R-markdown/Data/Compare_CpGs_Group.csv", row.names = 1)
+
+
 ##### Faceting with DenStem Samples ####################
 ggplot(Compare_CpGs_GROUP, aes(x=Pyro_4_CpG_average, y=Nano_4_CpG_average, color = DataSet)) +
   geom_smooth(method = "lm", color="black") +
   geom_point(aes(size=Coverage), alpha = 0.6)+
-  stat_regline_equation(label.y = 2, label.x = 6,aes(label = ..rr.label..),color = "black", size=4)+
+  stat_regline_equation(label.y = 6, label.x = 6,aes(label = ..rr.label..),color = "black", size=4)+
   scale_color_brewer(palette = "Set1", guide="none")+
   scale_size_continuous(name="Depth",breaks = c(5,10,50,100,850), range = c(1,16) )+
   xlab("Pyro sequencing")+
@@ -228,6 +236,24 @@ ggplot(Compare_CpGs_GROUP, aes(x=Pyro_4_CpG_average, y=Nano_4_CpG_average, color
 #   #facet_wrap(.~DataSet)+
 #   theme_bw()+
 #   theme(aspect.ratio = 1)
+
+Compare_CpGs_Radium <- Compare_CpGs_GROUP %>% filter(DataSet == "Radium")
+
+ggplot(Compare_CpGs_Radium, aes(x=Pyro_4_CpG_average, y=Nano_4_CpG_average, color = "CornflowerBlue")) +
+  geom_smooth(method = "lm", color="black") +
+  geom_point(aes(size=Coverage), alpha = 0.6)+
+  stat_regline_equation(label.y = 20, label.x = 60,aes(label = ..rr.label..),color = "black", size=4)+
+  #scale_color_brewer(palette = "Set1", guide="none")+
+  scale_size_continuous(name="Depth",breaks = c(5,10,50,100,150), range = c(1,10) )+
+  xlab("Pyro sequencing")+
+  ylab("Nanopore sequencing")+
+  geom_hline(yintercept = 9)+
+  geom_vline(xintercept = 9)+
+  # scale_y_sqrt(breaks=c(10,25,50,75,100))+
+  # scale_x_sqrt(breaks=c(10,25,50,75,100))+
+
+  #facet_wrap(.~DataSet)+
+  theme_bw()
 ```
 
 

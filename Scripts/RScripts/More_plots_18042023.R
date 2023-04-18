@@ -26,7 +26,7 @@ pheatmap(Metsum_ROI_long,
 
 ggplot(FOUR_CpGs, aes(x=Percent_Meth_Pyro, y=Percent_Meth_Nano, color = Pos))+
   geom_smooth(method = lm, color="black")+
-  stat_regline_equation(label.y = 2, label.x = 6,aes(label = ..rr.label..),color = "black")+
+  stat_regline_equation(label.y = 20, label.x = 50,aes(label = ..rr.label..),color = "black")+
   geom_point(aes(size=Depth), alpha = 0.6)+
   scale_size_continuous(name="Depth",breaks = c(5,15,25,100,150), range = c(1,8))+
   # geom_hline(yintercept = 10)+
@@ -34,6 +34,7 @@ ggplot(FOUR_CpGs, aes(x=Percent_Meth_Pyro, y=Percent_Meth_Nano, color = Pos))+
   xlab("Pyro sequencing")+
   ylab("Nanopore sequencing")+
   theme_bw()+
+  theme( aspect.ratio = 1)+
   scale_color_brewer(palette = "Set2", guide="none")+
   # scale_y_sqrt(breaks=c(10,25,50,75,100))+
   # scale_x_sqrt(breaks=c(10,25,50,75,100))+
@@ -48,7 +49,7 @@ GROUP <- FOUR_CpGs %>%
 
 ggplot(GROUP, aes(x=Average_Meth_Pyro, y=Average_Meth_Nano)) +
   geom_smooth(method = "lm", color="black") +
-  geom_point(aes(size=Depth), alpha = 0.6, color="Black")+
+  geom_point(aes(size=Depth), alpha = 0.6, color="CornflowerBlue")+
   stat_regline_equation(label.y = 20, label.x = 60,aes(label = ..rr.label..),color = "black", size=4)+
   #scale_color_brewer(palette = "Set1", guide="none")+
   scale_size_continuous(name="Depth",breaks = c(5,10,50,100,150), range = c(1,16) )+
@@ -61,6 +62,21 @@ ggplot(GROUP, aes(x=Average_Meth_Pyro, y=Average_Meth_Nano)) +
   #facet_wrap(.~DataSet)+
   theme_bw()+
   theme(aspect.ratio = 1)
+
+Compare_CpGs_Radium <- Compare_CpGs_GROUP %>% filter(DataSet == "Radium")
+
+ggplot(Compare_CpGs_Radium, aes(x=Pyro_4_CpG_average, y=Nano_4_CpG_average)) +
+  geom_smooth(method = "lm", color="black") +
+  geom_point(aes(size=Coverage), alpha = 0.8, color="CornflowerBlue")+
+  stat_regline_equation(label.y = 20, label.x = 60,aes(label = ..rr.label..),color = "black", size=4)+
+  #scale_color_brewer(palette = "Set1", guide="none")+
+  scale_size_continuous(name="Depth",breaks = c(5,10,50,100,150), range = c(1,10) )+
+  xlab("Pyro sequencing")+
+  ylab("Nanopore sequencing")+
+  geom_hline(yintercept = 9)+
+  geom_vline(xintercept = 9)+
+  theme(aspect.ratio = 1)+
+  theme_bw()
 
 ###################
 
@@ -77,18 +93,33 @@ p$Nano_Pyro_Concordance <- if_else(p$Known_status == p$Nano_Methylation_Status, 
 
 p2 <- p %>% select(SampleID, Series, Nano_Pyro_Concordance) %>%distinct()  %>% group_by(Series, Nano_Pyro_Concordance) %>% tally()
 
+p <- p %>% filter(Series == "Radium")
+########################
+# confusion matrix
+Nanopore <- factor(c("Methylated", "Methylated", "UnMethylated", "UnMethylated"))
+PSQ <- factor(c("Methylated", "UnMethylated", "Methylated", "UnMethylated"))
+Y      <- c(30, 7, 0, 31)
+df <- data.frame(Nanopore, PSQ, Y)
+
+library(ggplot2)
+ggplot(data =  df, mapping = aes(x = PSQ, y = Nanopore)) +
+  geom_tile(aes(fill = Y), colour = "white") +
+  geom_text(aes(label = sprintf("%1.0f", Y)), vjust = 1, size = 18) +
+  scale_fill_gradient(low = "white", high = "red") +
+  theme_bw(base_size = 18) + theme(legend.position = "none")
+################
 #knitr::kable(p2)
 
-ggplot(p, aes(x=Known_status, y=Average_Meth_Nano, color = Series))+
+ggplot(p, aes(x=Known_status, y=Average_Meth_Nano))+
   geom_hline(yintercept = 9)+
-  geom_beeswarm(aes(size = Depth), alpha = 0.6, cex=3)+
-  scale_size_continuous(name="Depth",breaks = c(5,10,50,100), range = c(1,10) )+
+  geom_beeswarm(aes(size = 4, color = Known_status), alpha = 0.7, cex=3.5)+
+  scale_size_continuous(guide="none")+
   scale_color_brewer(palette = "Set1", guide="none")+
-  xlab("Known methylation status")+
-  ylab("Average methylation per nanopore")+
-  facet_grid(.~Series)+
+  xlab("Known methylation status (PSQ)")+
+  ylab("Nanopore methylation (%)")+
+  #facet_grid(.~Series)+
   theme_bw()+
-  theme(axis.text.x = element_text(angle = 45, hjust=1), aspect.ratio = 2.5)
+  theme(axis.text.x = element_text(angle = 45, hjust=1))
 
 ```
 ```{r Concordance, echo=FALSE}
