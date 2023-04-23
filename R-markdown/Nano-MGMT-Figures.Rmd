@@ -265,7 +265,7 @@ Use 4 CpG sites (methylation cutoff 9%) to classify all samples, compared to kno
 library(ggbeeswarm)
 
 
-FOUR_CpGs <- read.csv("Data/newFOUR_CPGs.csv")
+FOUR_CpGs <- read.csv("MGMT_R/R-Markdown/Data/newFOUR_CPGs.csv")
 
 Four_CpGs_group <- FOUR_CpGs %>% select(c(SampleID,Calls_num,Percent_Meth_Nano)) %>%
   group_by(SampleID) %>% summarise(Average_Meth_Nano = mean(Percent_Meth_Nano))
@@ -278,11 +278,13 @@ p <- p %>% select(SampleID,Series,Depth, Known_status,Average_Meth_Nano)
 p$Nano_Methylation_Status <- if_else(p$Average_Meth_Nano > 9, "Methylated", "UnMethylated")
 p$Nano_Pyro_Concordance <- if_else(p$Known_status == p$Nano_Methylation_Status, "Concordant", "Discordant")
 
+p <- p %>% filter(Series !="DenStem")
+
 p2 <- p %>% select(SampleID, Series, Nano_Pyro_Concordance) %>%distinct()  %>% group_by(Series, Nano_Pyro_Concordance) %>% tally()
 
 #knitr::kable(p2)
 
-ggplot(p, aes(x=Known_status, y=Average_Meth_Nano, color = Series))+
+ggplot(p, aes(x=Known_status, y=Average_Meth_Nano, color = Known_status))+
   geom_hline(yintercept = 9)+
   geom_beeswarm(aes(size = Depth), alpha = 0.6, cex=3)+
   scale_size_continuous(name="Depth",breaks = c(5,10,50,100), range = c(1,10) )+
@@ -291,7 +293,8 @@ ggplot(p, aes(x=Known_status, y=Average_Meth_Nano, color = Series))+
   ylab("Average methylation per nanopore")+
   facet_grid(.~Series)+
   theme_bw()+
-  theme(axis.text.x = element_text(angle = 45, hjust=1), aspect.ratio = 2.5)
+  theme(axis.text.x = element_text(angle = 45, hjust=1), aspect.ratio = 2.5)+
+  facet_grid(.~Series)
 
 ```
 ```{r Concordance, echo=FALSE}
