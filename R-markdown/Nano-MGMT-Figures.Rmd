@@ -192,24 +192,21 @@ ggplot(FOUR_CpGs, aes(x=Percent_Meth_Pyro, y=Percent_Meth_Nano, color = Pos))+
 Group average as measured by nanopore and pyrosequencing
 ```{r Compare_Group, echo=FALSE, out.width="100%", fig.width=10, fig.height=5, fig.cap="Comparison of nanopore sequencing and Pyrosequencing results of 4 CpGs in exon 1 of the MGMT promoter. Plotted values are average methylation of 4 CpGs. Black horizontal and vertical lines mark the 9 percent cut-off value between methylated and unmethylated samples, as determined by pyrosequencing."}
 library(ggpubr)
-Compare_CpGs_GROUP <- read.csv("R-markdown/Data/Compare_CpGs_Group.csv", row.names = 1)
+Compare_CpGs_GROUP <- read.csv("MGMT_R/R-markdown/Data/Compare_CpGs_Group.csv", row.names = 1)
 
+Compare_CpGs_Radium <- Compare_CpGs_GROUP %>% filter(DataSet == "Radium")
 
-##### Faceting with DenStem Samples ####################
-ggplot(Compare_CpGs_GROUP, aes(x=Pyro_4_CpG_average, y=Nano_4_CpG_average, color = DataSet)) +
+ggplot(Compare_CpGs_Radium, aes(x=Pyro_4_CpG_average, y=Nano_4_CpG_average)) +
   geom_smooth(method = "lm", color="black") +
-  geom_point(aes(size=Coverage), alpha = 0.6)+
-  stat_regline_equation(label.y = 6, label.x = 6,aes(label = ..rr.label..),color = "black", size=4)+
-  scale_color_brewer(palette = "Set1", guide="none")+
-  scale_size_continuous(name="Depth",breaks = c(5,10,50,100,850), range = c(1,16) )+
+  geom_point(aes(size=Coverage), alpha = 0.8, color="CornflowerBlue")+
+  stat_regline_equation(label.y = 20, label.x = 60,aes(label = ..rr.label..),color = "black", size=4)+
+  #scale_color_brewer(palette = "Set1", guide="none")+
+  scale_size_continuous(name="Depth",breaks = c(5,10,50,100,150), range = c(1,10) )+
   xlab("Pyro sequencing")+
   ylab("Nanopore sequencing")+
   geom_hline(yintercept = 9)+
   geom_vline(xintercept = 9)+
-  # scale_y_sqrt(breaks=c(10,25,50,75,100))+
-  # scale_x_sqrt(breaks=c(10,25,50,75,100))+
-
-  facet_wrap(.~DataSet)+
+  theme(aspect.ratio = 1)+
   theme_bw()
 
 # GROUP <- FOUR_CpGs %>% 
@@ -233,23 +230,6 @@ ggplot(Compare_CpGs_GROUP, aes(x=Pyro_4_CpG_average, y=Nano_4_CpG_average, color
 #   theme_bw()+
 #   theme(aspect.ratio = 1)
 
-Compare_CpGs_Radium <- Compare_CpGs_GROUP %>% filter(DataSet == "Radium")
-
-ggplot(Compare_CpGs_Radium, aes(x=Pyro_4_CpG_average, y=Nano_4_CpG_average, color = "CornflowerBlue")) +
-  geom_smooth(method = "lm", color="black") +
-  geom_point(aes(size=Coverage), alpha = 0.6)+
-  stat_regline_equation(label.y = 20, label.x = 60,aes(label = ..rr.label..),color = "black", size=4)+
-  #scale_color_brewer(palette = "Set1", guide="none")+
-  scale_size_continuous(name="Depth",breaks = c(5,10,50,100,150), range = c(1,10) )+
-  xlab("Pyro sequencing")+
-  ylab("Nanopore sequencing")+
-  geom_hline(yintercept = 9)+
-  geom_vline(xintercept = 9)+
-  # scale_y_sqrt(breaks=c(10,25,50,75,100))+
-  # scale_x_sqrt(breaks=c(10,25,50,75,100))+
-
-  #facet_wrap(.~DataSet)+
-  theme_bw()
 ```
 
 
