@@ -65,6 +65,7 @@ library(scales)
 
 MGMT_RunSum <- read.csv("MGMT_R/R-markdown/Data/newRunsum.csv", row.names = 1)
 
+# Summarize and count tumors
 Table <- MGMT_RunSum %>% 
   select(SampleID,Series,Diagnosis) %>% 
   distinct() %>% 
@@ -72,24 +73,21 @@ Table <- MGMT_RunSum %>%
   tally() %>% 
   spread(Diagnosis,n) %>% 
   replace(is.na(.), 0) %>%
-  adorn_totals("row") %>%
-  mutate(Other = rowSums(select(.,c(ATRT_SHH, Ganglioglioma, HPC, Medulloblastoma, PCNSL, PXA, Unknown)))) %>%
-  select(c(Series,Astrocytoma,`Astrocytoma HG`, Glioblastoma, LGG_PA,Meningioma, Metastasis, Oligodendroglioma,Other))
-  adorn_totals("row") 
-  #mutate(Other = rowSums(select(.,c(ATRT_SHH, Ganglioglioma, HPC, Medulloblastoma, PCNSL, PXA, Unknown)))) %>%
-  #select(c(Series,Astrocytoma,`Astrocytoma HG`, Glioblastoma, LGG_PA,Meningioma, Metastasis, Oligodendroglioma,Other))
+  adorn_totals(c("row", "col"))
 
+#transpose and name columns
+Table <- row_to_names(t(Table),1)
 
 ```
 
 Table has been reformated for Latex
 ```{r Sample_overview, echo=FALSE}
 
-#knitr::kable(Table,align = "lccccccc", format="pipe", booktabs=TRUE, caption = "Overview of samples included in this study") 
+knitr::kable(Table,align = "lccccccc", format="pipe", booktabs=TRUE, caption = "Overview of samples included in this study") 
 
 #knitr::kable(Table,align = "lccccccc", format="html", booktabs=TRUE, caption = "Overview of samples included in this study") 
 
-knitr::kable(Table,align = "lccccccc", format="latex", caption = "Overview of samples included in this study") %>% kable_styling(latex_options="scale_down")
+#knitr::kable(Table,align = "lcccc", format="latex", caption = "Overview of samples included in this study") %>% kable_styling(latex_options="scale_down")
 
 ```
 
@@ -137,22 +135,16 @@ ggplot(barplot_data, aes(y=Diagnosis, x= Samples, fill=Known_status, label = Sam
 ggplot(MGMT_RunSum, aes(x=Method, y=Depth))+
   geom_boxplot(aes(fill=Known_status), alpha = 0.2)+
   geom_point(size = 3, position = position_jitterdodge(0.2,0), alpha = 0.7, aes(color=Known_status))+
-    scale_color_brewer(name="Known Status", palette = "Set1")+
+  scale_color_brewer(name="Known Status", palette = "Set1")+
   scale_fill_brewer(name="Known Status", palette="Set1")+
- # scale_fill_discrete(guide="none")+
-   scale_x_discrete(labels = c("Adaptive\nSampling", "Barcoded", "Single"))+
-  # scale_x_discrete(labels = label_wrap(8)) +
-  #stat_summary(fun=median, geom="point", shape= "-", size=14, color="black",alpha = 0.8,position = position_dodge(0.9), aes(fill=Known_status))+
-  #ylim(0,125)+
-  #scale_y_break(c(150, 250)) +
-  scale_y_log10()+
+  scale_x_discrete(labels = c("Adaptive\nSampling", "Barcoded", "Single"))+
+  scale_y_continuous(trans = 'log10', breaks = c(1,10,100,1000), limits = c(0.9,1000))+
   xlab ("")+
   ylab("Sequence depth") +
-  theme_bw(base_size = 16) +
-  theme(axis.text.x = element_text(angle = 45, hjust=1))
+  theme_bw(base_size = 16)
 ```
 
-```{r Coverage_Dataset, echo=FALSE, fig.cap="Sequencing depth of methods, group median represented by red diamond. Single sample runs generally have higher sequence depth than barcoded samples or adaptive sampling."}
+```{r Coverage_Dataset, echo=FALSE, eval=FALSE, fig.cap="Sequencing depth of methods, group median represented by red diamond. Single sample runs generally have higher sequence depth than barcoded samples or adaptive sampling."}
 ggplot(MGMT_RunSum, aes(x=Series, y=Depth))+
   geom_boxplot(aes(color=Method), alpha=0.1) +
   geom_point(size = 2, position = position_jitterdodge(0.2,0), alpha = 0.6, aes(color=Method)) +
@@ -176,19 +168,23 @@ library(ggpubr)
 
 FOUR_CpGs <- read.csv("MGMT_R/R-markdown/Data/newFOUR_CPGs.csv", row.names = 1)
 
+FOUR_CpGs$Pos <- gsub("CpG1", "CpG 76",FOUR_CpGs$Pos)
+FOUR_CpGs$Pos <- gsub("CpG2","CpG 77",FOUR_CpGs$Pos)
+FOUR_CpGs$Pos <- gsub("CpG3","CpG 78",FOUR_CpGs$Pos)
+FOUR_CpGs$Pos <- gsub("CpG4","CpG 79",FOUR_CpGs$Pos)
+
+
+
+
 ggplot(FOUR_CpGs, aes(x=Percent_Meth_Pyro, y=Percent_Meth_Nano, color = Pos))+
   geom_smooth(method = lm, color="black")+
   stat_regline_equation(label.y = 10, label.x = 60,aes(label = ..rr.label..),color = "black")+
   geom_point(aes(size=Depth), alpha = 0.6)+
   scale_size_continuous(name="Depth",breaks = c(5,15,25,100,150), range = c(1,8))+
-  # geom_hline(yintercept = 10)+
-  # geom_vline(xintercept = 10)+
   xlab("Pyro sequencing")+
   ylab("Nanopore sequencing")+
   theme_bw()+
   scale_color_brewer(palette = "Set2", guide="none")+
-  # scale_y_sqrt(breaks=c(10,25,50,75,100))+
-  # scale_x_sqrt(breaks=c(10,25,50,75,100))+
   facet_wrap(.~Pos)
 
 ```
@@ -196,7 +192,7 @@ ggplot(FOUR_CpGs, aes(x=Percent_Meth_Pyro, y=Percent_Meth_Nano, color = Pos))+
 Group average as measured by nanopore and pyrosequencing
 ```{r Compare_Group, echo=FALSE, out.width="100%", fig.width=10, fig.height=5, fig.cap="Comparison of nanopore sequencing and Pyrosequencing results of 4 CpGs in exon 1 of the MGMT promoter. Plotted values are average methylation of 4 CpGs. Black horizontal and vertical lines mark the 9 percent cut-off value between methylated and unmethylated samples, as determined by pyrosequencing."}
 library(ggpubr)
-Compare_CpGs_GROUP <- read.csv("MGMT_R/R-markdown/Data/Compare_CpGs_Group.csv", row.names = 1)
+Compare_CpGs_GROUP <- read.csv("R-markdown/Data/Compare_CpGs_Group.csv", row.names = 1)
 
 
 ##### Faceting with DenStem Samples ####################
@@ -265,7 +261,11 @@ Use 4 CpG sites (methylation cutoff 9%) to classify all samples, compared to kno
 library(ggbeeswarm)
 
 
+<<<<<<< Updated upstream
 FOUR_CpGs <- read.csv("MGMT_R/R-Markdown/Data/newFOUR_CPGs.csv")
+=======
+FOUR_CpGs <- read.csv("R-markdown/Data/newFOUR_CPGs.csv")
+>>>>>>> Stashed changes
 
 Four_CpGs_group <- FOUR_CpGs %>% select(c(SampleID,Calls_num,Percent_Meth_Nano)) %>%
   group_by(SampleID) %>% summarise(Average_Meth_Nano = mean(Percent_Meth_Nano))
@@ -308,6 +308,9 @@ load("Data/Annotations.Rdata")
 
 t <- ifelse(Metsum_ROI_long_ISLAND > 10, 1,0) # If methylation of any given CpG (column), in any given sample (row) is above 10% than 1, else 0
 
+# Selecting the same CpGs as Siller et al
+t <- t[,c(74:98)]
+
 t2 <- as.data.frame(rowSums(t))
 
 names(t2) <-"CumMeth"
@@ -323,18 +326,22 @@ Depth <- MGMT_RunSum %>% select(c(SampleID,Depth))
 
 t3 <- left_join(t3, Depth, by="SampleID")
 
+t3 <- t3 %>% filter(Series != "DenStem")
+
 # Beeswarm based on cumulative methylation
 
-ggplot(t3, aes(x=Known_status, y=CumMeth, color = Series))+
-  geom_hline(yintercept = 45)+
+ggplot(t3, aes(x=Known_status, y=CumMeth, color = Known_status))+
+  #geom_hline(yintercept = 45)+
   geom_beeswarm(aes(size = Depth), alpha = 0.6, cex=3)+
   scale_size_continuous(name="Depth",breaks = c(5,10,50,100), range = c(1,10) )+
   scale_color_brewer(palette = "Set1", guide="none")+
+  ylim(0,25)+
   xlab("Known methylation status")+
   ylab("Cumulative methylation per nanopore")+
-  facet_grid(.~Series)+
-  theme_bw()+
-  theme(axis.text.x = element_text(angle = 45, hjust=1), aspect.ratio = 2.5)
+  #facet_grid(.~Series)+
+  theme_bw(base_size = 14)
+#+
+#  theme(axis.text.x = element_text(angle = 45, hjust=1), aspect.ratio = 2.5)
 ```
 
 
@@ -367,6 +374,9 @@ library(RColorBrewer)
 
 Metsum_ROI_long_ISLAND <- Metsum_ROI_long[c(2:nrow(Metsum_ROI_long)),c(8:105)]
 
+##### Removing DenStem Samples
+Metsum_ROI_long_ISLAND <- Metsum_ROI_long_ISLAND[c(1:128),]
+
 res <- pheatmap(Metsum_ROI_long_ISLAND,
          cluster_rows = T, 
          cluster_cols = F,
@@ -376,17 +386,18 @@ res <- pheatmap(Metsum_ROI_long_ISLAND,
          border_color = NA,
          scale = "none",
          drop_levels = T,
+         #color = c("blue",brewer.pal(n = 9, name = "Reds")),
          color = rev(brewer.pal(n = 10, name = "Spectral")),
-         fontsize_col = 4,
+         fontsize_col = 16,
          fontsize_row = 4,
-         fontsize = 6,
+         fontsize = 14,
          legend = T,
          show_rownames = F,
          legend_breaks = seq(0,100,10),
           annotation_col = mat_col,
           annotation_row = row_anno,
          annotation_colors = ann_colors,
-         main = "All samples,  (n=145)",
+        # main = "All samples,  (n=148)",
          legend_labels = c("0%","10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%")
          )
 
@@ -466,7 +477,7 @@ pheatmap(Metsum_ROI_long_GBM,
 
 {NEEDS UPDATE}Patient survival data is currently only available for 43 patients, including 37 GBM patients. Of these, 26 are primary GBMs. Comparison of survival of these 26 patients can be seen in figure 10. There is little difference between the results if patients are classified by pyrosequencing or nanopore sequencing, only two patients switch groups. We are expecting more data to strengthen these results. But they are promising: classification by nanopore sequencing is as good or better than pyrosequencing.
 ```{r KaplanMeier, echo=FALSE,  out.width="100%", out.height="100%", fig.cap="Kaplan-Meier Overall Survival curves"}
-Patient_meta <- read.csv("Data/Patient_Survival.csv")
+Patient_meta <- read.csv("R-markdown/Data/Patient_Survival.csv")
 
 MGMT_clusters <- data.frame(cluster=cutree(res$tree_row, k=2))
 
@@ -503,11 +514,11 @@ fit2_filt <- survfit( Surv(cluster_surv_filt$months_to_event, cluster_surv_filt$
 ggsurvplot(
   fit = fit1_filt,
   data = cluster_surv_filt,
-  palette = c("cornflowerblue","darkorange3"),
+  palette = c("darkorange3","cornflowerblue"),
   xlab = "OS, Months", 
-  ylab = "Overall survival probability",
-  legend.title = "Classification by Pyrosequencing",
-  legend.labs = c("Methylated", "Unmethylated"),
+ # ylab = "Overall survival probability",
+  legend.title = "Pyrosequencing",
+  legend.labs = c("Methylated", "UnMethylated"),
   pval = TRUE,
   pval.coord = c(0, 0.1),
   font.x = c(14, "bold", "black"),
@@ -519,10 +530,10 @@ ggsurvplot(
   fit = fit2_filt,
   data = cluster_surv_filt,
   
-  palette = c("darkorange3","cornflowerblue"),
+  palette = c("cornflowerblue","darkorange3"),
   xlab = "OS, Months", 
-  ylab = "Overall survival probability",
-  legend.title = "Classification by Nanopore cluster",
+ # ylab = "Overall survival probability",
+  legend.title = "Nanopore",
   #legend.labs = c("Cluster 1", "Cluster 2", "Cluster 3"),
   legend.labs = c("Cluster 1", "Cluster 2"),
   pval = TRUE,

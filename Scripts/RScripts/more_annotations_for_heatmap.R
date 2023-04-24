@@ -29,12 +29,13 @@ rownames(row_anno) <- row_anno$SampleID
 row_anno <- row_anno[,c("Known_status","Diagnosis")]
 
 ann_colors = list(
-  Known_status = c(UnMethylated = "grey", Methylated = "black"),
-  Diagnosis = c(Glioblastoma = "#440154FF", IDHglioma = "#31688EFF", Meningioma = "#35B779FF", Other = "#FDE725FF"),
-  Feature = c(Promoter = "#7FC97F", Exon1 = "#377EB8", Intron1 = "#FDC086")
+  Known_status = c(UnMethylated = "blue", Methylated = "red"),
+  Diagnosis = c(Glioblastoma = "#31688EFF", IDHglioma = "#440154FF" , Meningioma = "#FDE725FF", Other = "#35B779FF"),
+  Feature = c(Promoter = "#7FC97F", Exon1 = "#377EB8", Intron1 = "#FDC086"),
+  Method = c(STP27 = "black", Siller_et_al = "darkgrey", " "  = "white")
 )
 
-mat_col$method <- ifelse(row.names(mat_col)==84, "STP27", 
+mat_col$Method <- ifelse(row.names(mat_col)==84, "STP27", 
                          ifelse(row.names(mat_col)==31, "STP27", 
-                                ifelse(row.names(mat_col)>=74, "Siller et al", "")))
-mat_col[c(15,16),2] <- ""
+                                ifelse(row.names(mat_col)>=74, "Siller_et_al", " ")))
+mat_col[c(15,16),2] <- " "
