@@ -96,29 +96,35 @@ p2 <- p %>% select(SampleID, Series, Nano_Pyro_Concordance) %>%distinct()  %>% g
 p <- p %>% filter(Series == "Radium")
 ########################
 # confusion matrix
-Nanopore <- factor(c("Methylated", "Methylated", "UnMethylated", "UnMethylated"))
-PSQ <- factor(c("Methylated", "UnMethylated", "Methylated", "UnMethylated"))
-Y      <- c(30, 7, 0, 31)
-df <- data.frame(Nanopore, PSQ, Y)
+Series <- factor(c("Radium","Radium","Radium","Radium","Rapid-CNS","Rapid-CNS","Rapid-CNS","Rapid-CNS"))
+Nanopore <- factor(c("UnMethylated", "UnMethylated","Methylated", "Methylated","UnMethylated", "UnMethylated","Methylated", "Methylated"))
+PSQ <- factor(c("UnMethylated", "Methylated",  "UnMethylated","Methylated","UnMethylated", "Methylated",  "UnMethylated","Methylated"))
+Y      <- c(32, 0, 6, 30,42,5,4,16)
+df <- data.frame(Series,Nanopore, PSQ, Y)
 
 library(ggplot2)
 ggplot(data =  df, mapping = aes(x = PSQ, y = Nanopore)) +
   geom_tile(aes(fill = Y), colour = "white") +
   geom_text(aes(label = sprintf("%1.0f", Y)), vjust = 1, size = 18) +
-  scale_fill_gradient(low = "white", high = "red") +
-  theme_bw(base_size = 18) + theme(legend.position = "none")
+  scale_fill_gradient2(low = "red",
+                       mid = "white",
+                       high = "grey",
+                       midpoint = 5,) +
+  theme_bw(base_size = 18) + theme(legend.position = "none")+
+  facet_grid(.~Series)
 ################
 #knitr::kable(p2)
 
 ggplot(p, aes(x=Known_status, y=Average_Meth_Nano))+
-  geom_hline(yintercept = 9)+
+  geom_hline(yintercept = 10)+
   geom_beeswarm(aes(size = 4, color = Known_status), alpha = 0.7, cex=3.5)+
   scale_size_continuous(guide="none")+
   scale_color_brewer(palette = "Set1", guide="none")+
   xlab("Known methylation status (PSQ)")+
   ylab("Nanopore methylation (%)")+
-  #facet_grid(.~Series)+
-  theme_bw()+
+  facet_grid(.~Series)+
+  theme_bw()
++
   theme(axis.text.x = element_text(angle = 45, hjust=1))
 
 ```

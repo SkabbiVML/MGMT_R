@@ -204,8 +204,8 @@ ggplot(Compare_CpGs_Radium, aes(x=Pyro_4_CpG_average, y=Nano_4_CpG_average)) +
   scale_size_continuous(name="Depth",breaks = c(5,10,50,100,150), range = c(1,10) )+
   xlab("Pyro sequencing")+
   ylab("Nanopore sequencing")+
-  geom_hline(yintercept = 9)+
-  geom_vline(xintercept = 9)+
+  geom_hline(yintercept = 10)+
+  geom_vline(xintercept = 10)+
   theme(aspect.ratio = 1)+
   theme_bw()
 
@@ -240,12 +240,7 @@ Use 4 CpG sites (methylation cutoff 9%) to classify all samples, compared to kno
 
 library(ggbeeswarm)
 
-
-<<<<<<< Updated upstream
 FOUR_CpGs <- read.csv("MGMT_R/R-Markdown/Data/newFOUR_CPGs.csv")
-=======
-FOUR_CpGs <- read.csv("R-markdown/Data/newFOUR_CPGs.csv")
->>>>>>> Stashed changes
 
 Four_CpGs_group <- FOUR_CpGs %>% select(c(SampleID,Calls_num,Percent_Meth_Nano)) %>%
   group_by(SampleID) %>% summarise(Average_Meth_Nano = mean(Percent_Meth_Nano))
@@ -255,31 +250,67 @@ Four_CpGs_group <- na.omit(Four_CpGs_group)
 p <- left_join(MGMT_RunSum,Four_CpGs_group)
 
 p <- p %>% select(SampleID,Series,Depth, Known_status,Average_Meth_Nano)
-p$Nano_Methylation_Status <- if_else(p$Average_Meth_Nano > 9, "Methylated", "UnMethylated")
+p$Nano_Methylation_Status <- if_else(p$Average_Meth_Nano > 10, "Methylated", "UnMethylated")
 p$Nano_Pyro_Concordance <- if_else(p$Known_status == p$Nano_Methylation_Status, "Concordant", "Discordant")
 
-p <- p %>% filter(Series !="DenStem")
+p <- p %>% 
+  filter(Series !="DenStem") %>% 
+  group_by(SampleID) %>% 
+  mutate(Depth = sum(Depth)) %>% 
+  distinct()
 
-p2 <- p %>% select(SampleID, Series, Nano_Pyro_Concordance) %>%distinct()  %>% group_by(Series, Nano_Pyro_Concordance) %>% tally()
+p2 <- p %>% select(SampleID, Series, Nano_Pyro_Concordance)  %>% group_by(Series, Nano_Pyro_Concordance) %>% tally()
 
-#knitr::kable(p2)
-
+# Depth represented as dot size
 ggplot(p, aes(x=Known_status, y=Average_Meth_Nano, color = Known_status))+
-  geom_hline(yintercept = 9)+
+  geom_hline(yintercept = 10)+
   geom_beeswarm(aes(size = Depth), alpha = 0.6, cex=3)+
   scale_size_continuous(name="Depth",breaks = c(5,10,50,100), range = c(1,10) )+
   scale_color_brewer(palette = "Set1", guide="none")+
   xlab("Known methylation status")+
-  ylab("Average methylation per nanopore")+
+  ylab("Nanopore methylation (%)")+
   facet_grid(.~Series)+
   theme_bw()+
-  theme(axis.text.x = element_text(angle = 45, hjust=1), aspect.ratio = 2.5)+
+  theme(aspect.ratio = 2.5)+
   facet_grid(.~Series)
+
+# Universal dot size
+ggplot(p, aes(x=Known_status, y=Average_Meth_Nano))+
+  geom_hline(yintercept = 10)+
+  geom_beeswarm(aes(size = 4, color = Known_status), alpha = 0.7, cex=3.5)+
+  scale_size_continuous(guide="none")+
+  scale_color_brewer(palette = "Set1", guide="none")+
+  xlab("Known methylation status (PSQ)")+
+  ylab("Nanopore methylation (%)")+
+  facet_grid(.~Series)+
+  theme(aspect.ratio = 2.5)+
+  theme_bw()
 
 ```
 ```{r Concordance, echo=FALSE}
 knitr::kable(p2)
 ```
+
+```{r Confusion, echo=FALSE}
+# confusion matrix
+Series <- factor(c("Radium","Radium","Radium","Radium","Rapid-CNS","Rapid-CNS","Rapid-CNS","Rapid-CNS"))
+Nanopore <- factor(c("UnMethylated", "UnMethylated","Methylated", "Methylated","UnMethylated", "UnMethylated","Methylated", "Methylated"))
+PSQ <- factor(c("UnMethylated", "Methylated",  "UnMethylated","Methylated","UnMethylated", "Methylated",  "UnMethylated","Methylated"))
+Y      <- c(32, 0, 6, 30,42,5,4,16)
+df <- data.frame(Series,Nanopore, PSQ, Y)
+
+library(ggplot2)
+ggplot(data =  df, mapping = aes(x = PSQ, y = Nanopore)) +
+  geom_tile(aes(fill = Y), colour = "white") +
+  geom_text(aes(label = sprintf("%1.0f", Y)), vjust = 1, size = 18) +
+  scale_fill_gradient2(low = "red",
+                       mid = "white",
+                       high = "grey",
+                       midpoint = 5,) +
+  theme_bw(base_size = 18) + theme(legend.position = "none")+
+  facet_grid(.~Series)
+```
+
 
 ```{r Cumulative Beeswarm, echo=FALSE, out.width="100%",fig.cap="Cumulative methylation of MGMT promoter as analysed by nanopore sequencing agains the known classification of all samples"}
 Metsum_ROI_long <- read.csv("Data/Metsum_ROI_long.csv", header = T, row.names = 1)
