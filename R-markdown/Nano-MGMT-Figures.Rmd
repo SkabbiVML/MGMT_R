@@ -41,7 +41,7 @@ knitr::opts_chunk$set(dpi = 100,
                       echo=TRUE, 
                       warning=FALSE, message=FALSE, eval = TRUE,
                       fig.show=TRUE, fig.width= 5,fig.height= 5,fig.align='center',
-                      out.width = '50%', fig.path= 'Figures/')
+                      out.width = '50%', fig.path= 'AutoFigures/')
 ```
 
 ## Figures
@@ -49,12 +49,12 @@ knitr::opts_chunk$set(dpi = 100,
 ### MGMT Promoter CpG island and methods of evaluation
 ```{r Promoter, echo=FALSE, out.width="100%", fig.cap="Organization of the MGMT promoter. MSP refers to the typical primer sites of methylation specific PCR to determine MGMT promoter methylation. Asterixes represent the 4 CpGs analysed by the Qiagen MGMT pyrosequencing kit."}
 
-knitr::include_graphics("MGMT_R/R-markdown/Figures/MGMT_promoter_region.png")
+knitr::include_graphics("Figures/MGMT_promoter_region.png")
 ```
 
 
 ```{r MGMT_stats, echo=FALSE}
-#load("Data/DotplotData.RData")
+
 library(ggplot2)
 library(dplyr)
 library(tidyr)
@@ -63,7 +63,8 @@ library(kableExtra)
 library(RColorBrewer)
 library(scales)
 
-MGMT_RunSum <- read.csv("MGMT_R/R-markdown/Data/newRunsum.csv", row.names = 1)
+load("Data/MGMT_R.Rdata")
+#MGMT_RunSum <- read.csv("MGMT_R/R-markdown/Data/newRunsum.csv", row.names = 1)
 
 # Summarize and count tumors
 Table <- MGMT_RunSum %>% 
@@ -92,7 +93,7 @@ knitr::kable(Table,align = "lccccccc", format="pipe", booktabs=TRUE, caption = "
 ```
 
 ### Overview of samples included in study
-```{r, Methylation_overview, echo=FALSE,  out.width="75%", fig.cap="Distribution of methylated versus unmethylated samples according to known status prior to nanopore sequencing"}
+```{r, Methylation_overview, echo=FALSE,  out.width="100%", fig.cap="Distribution of methylated versus unmethylated samples according to known status prior to nanopore sequencing"}
 ggplot(MGMT_RunSum, aes(y=Diagnosis, fill=Known_status))+
   geom_bar(stat = "count")+
   scale_fill_brewer(name="Mehtylation Status", palette="Set1")+
@@ -166,7 +167,7 @@ Comparison of individual CpGs as measured by nanopore and pyrosequencing
 ```{r Compare_Individual, echo=FALSE, out.width="100%", fig.cap="Comparison of individual CpGs within exon 1" }
 library(ggpubr)
 
-FOUR_CpGs <- read.csv("MGMT_R/R-markdown/Data/newFOUR_CPGs.csv", row.names = 1)
+#FOUR_CpGs <- read.csv("MGMT_R/R-markdown/Data/newFOUR_CPGs.csv", row.names = 1)
 
 FOUR_CpGs$Pos <- gsub("CpG1", "CpG 76",FOUR_CpGs$Pos)
 FOUR_CpGs$Pos <- gsub("CpG2","CpG 77",FOUR_CpGs$Pos)
@@ -192,7 +193,7 @@ ggplot(FOUR_CpGs, aes(x=Percent_Meth_Pyro, y=Percent_Meth_Nano, color = Pos))+
 Group average as measured by nanopore and pyrosequencing
 ```{r Compare_Group, echo=FALSE, out.width="100%", fig.width=10, fig.height=5, fig.cap="Comparison of nanopore sequencing and Pyrosequencing results of 4 CpGs in exon 1 of the MGMT promoter. Plotted values are average methylation of 4 CpGs. Black horizontal and vertical lines mark the 9 percent cut-off value between methylated and unmethylated samples, as determined by pyrosequencing."}
 library(ggpubr)
-Compare_CpGs_GROUP <- read.csv("MGMT_R/R-markdown/Data/Compare_CpGs_Group.csv", row.names = 1)
+#Compare_CpGs_GROUP <- read.csv("MGMT_R/R-markdown/Data/Compare_CpGs_Group.csv", row.names = 1)
 
 Compare_CpGs_Radium <- Compare_CpGs_GROUP %>% filter(DataSet == "Radium")
 
@@ -236,11 +237,10 @@ ggplot(Compare_CpGs_Radium, aes(x=Pyro_4_CpG_average, y=Nano_4_CpG_average)) +
 Use 4 CpG sites (methylation cutoff 9%) to classify all samples, compared to known status
 
 ```{r BeeSwarm, echo=FALSE, out.width="100%",fig.cap="Average nanopore sequencing percentage of CpGs 76-79 agains the Pyrosequencing classification"}
-```{r BeeSwarm, echo=FALSE, out.width="100%", fig.cap="Average nanopore sequencing percentage of CpGs 76-79 agains the Pyrosequencing classification" }
 
 library(ggbeeswarm)
 
-FOUR_CpGs <- read.csv("MGMT_R/R-Markdown/Data/newFOUR_CPGs.csv")
+#FOUR_CpGs <- read.csv("MGMT_R/R-Markdown/Data/newFOUR_CPGs.csv")
 
 Four_CpGs_group <- FOUR_CpGs %>% select(c(SampleID,Calls_num,Percent_Meth_Nano)) %>%
   group_by(SampleID) %>% summarise(Average_Meth_Nano = mean(Percent_Meth_Nano))
@@ -287,11 +287,12 @@ ggplot(p, aes(x=Known_status, y=Average_Meth_Nano))+
   theme_bw()
 
 ```
+
 ```{r Concordance, echo=FALSE}
 knitr::kable(p2)
 ```
 
-```{r Confusion, echo=FALSE}
+```{r Confusion, echo=FALSE,out.width="100%"}
 # confusion matrix
 Series <- factor(c("Radium","Radium","Radium","Radium","Rapid-CNS","Rapid-CNS","Rapid-CNS","Rapid-CNS"))
 Nanopore <- factor(c("UnMethylated", "UnMethylated","Methylated", "Methylated","UnMethylated", "UnMethylated","Methylated", "Methylated"))
@@ -311,11 +312,33 @@ ggplot(data =  df, mapping = aes(x = PSQ, y = Nanopore)) +
   facet_grid(.~Series)
 ```
 
+```{r STP27, echo=FALSE, out.width="100%"}
+#STP27_CpGs <- read.csv("MGMT_R/R-markdown/Data/STP27_All_samples.csv")
+
+
+STP27_CpGs <- STP27_CpGs %>% filter(Series != "DenStem")
+
+fun.1 <- function(x) 100/x
+
+ggplot(STP27_CpGs, aes(x=cg12434587, y=cg12981137, color = Known_status)) + 
+  stat_function(fun = fun.1, color = "grey", size = 2) + 
+  geom_point(aes(size=3), alpha = 0.6)+
+  scale_size_continuous(name="Depth",breaks = c(5,15,25,100,150), range = c(1,8), guide="none")+
+  scale_color_brewer(name="Known Status", palette = "Set1")+
+  scale_x_sqrt(limits = c(0,100),breaks=c(10,25,50,75,100))+
+  scale_y_sqrt(limits = c(0,100),breaks=c(10,25,50,75,100))+
+  guides(colour = guide_legend(override.aes = list(size=5)))+
+  theme_bw(base_size = 18)+
+  theme(aspect.ratio = 1)+
+  facet_wrap(~factor(Series, levels = c("Rapid-CNS", "Radium")))
+
+```
+
 
 ```{r Cumulative Beeswarm, echo=FALSE, out.width="100%",fig.cap="Cumulative methylation of MGMT promoter as analysed by nanopore sequencing agains the known classification of all samples"}
-Metsum_ROI_long <- read.csv("Data/Metsum_ROI_long.csv", header = T, row.names = 1)
+#Metsum_ROI_long <- read.csv("MGMT_R/R-Markdown/Data/Metsum_ROI_long.csv", header = T, row.names = 1)
 Metsum_ROI_long_ISLAND <- Metsum_ROI_long[c(2:nrow(Metsum_ROI_long)),c(8:105)]
-load("Data/Annotations.Rdata")
+
 
 t <- ifelse(Metsum_ROI_long_ISLAND > 10, 1,0) # If methylation of any given CpG (column), in any given sample (row) is above 10% than 1, else 0
 
@@ -328,15 +351,14 @@ names(t2) <-"CumMeth"
 
 t2$SampleID <- rownames(t2)
 
-row_anno$SampleID <- rownames(row_anno)
+t3 <- left_join(t2, MGMT_RunSum)
 
-t3 <- left_join(t2, row_anno)
+t3$Method <- NULL
 
-Depth <- MGMT_RunSum %>% select(c(SampleID,Depth))
-#names(coverage) <- c("Series", "Known_status", "SampleID", "Coverage")
+# combine sequence depth of duplicate samples
+t3 <- t3 %>% group_by(SampleID) %>% mutate(Depth = sum(Depth)) %>% distinct()
 
-t3 <- left_join(t3, Depth, by="SampleID")
-
+# remove denstem samples
 t3 <- t3 %>% filter(Series != "DenStem")
 
 # Beeswarm based on cumulative methylation
@@ -350,9 +372,9 @@ ggplot(t3, aes(x=Known_status, y=CumMeth, color = Known_status))+
   xlab("Known methylation status")+
   ylab("Cumulative methylation per nanopore")+
   #facet_grid(.~Series)+
-  theme_bw(base_size = 14)
-#+
-#  theme(axis.text.x = element_text(angle = 45, hjust=1), aspect.ratio = 2.5)
+  theme_bw(base_size = 14)+
+  facet_grid(.~Series)
+
 ```
 
 
@@ -361,7 +383,7 @@ ggplot(t3, aes(x=Known_status, y=CumMeth, color = Known_status))+
 
 ```{r Corrolation_plot, echo=FALSE, eval=FALSE}
 library(corrplot)
-Metsum_ROI_long <- read.csv("Data/Metsum_ROI_long.csv", header = T, row.names = 1)
+#Metsum_ROI_long <- read.csv("Data/Metsum_ROI_long.csv", header = T, row.names = 1)
 colnames(Metsum_ROI_long) <- c(-7:-1, 1:98,c("+1","+2", "+3","+4", "+5", "+6", "+7", "+8", "+9", "+10"))
 
 # correlation of CpGs
@@ -375,7 +397,7 @@ corrplot(cor(Metsum_ROI_long),
 
 ```{r Heatmap, echo=FALSE,  out.width="100%", out.height="100%", fig.cap="Clustered heatmap of all samples based on nanopore sequencing of CpG island of the MGMT promoter"}
 
-Metsum_ROI_long <- read.csv("Data/Metsum_ROI_long.csv", header = T, row.names = 1)
+#Metsum_ROI_long <- read.csv("MGMT_R/R-Markdown/Data/Metsum_ROI_long.csv", header = T, row.names = 1)
 colnames(Metsum_ROI_long) <- c(-7:-1, 1:98,c("+1","+2", "+3","+4", "+5", "+6", "+7", "+8", "+9", "+10"))
 load("Data/Annotations.Rdata")
 
@@ -397,7 +419,6 @@ res <- pheatmap(Metsum_ROI_long_ISLAND,
          border_color = NA,
          scale = "none",
          drop_levels = T,
-         #color = c("blue",brewer.pal(n = 9, name = "Reds")),
          color = rev(brewer.pal(n = 10, name = "Spectral")),
          fontsize_col = 16,
          fontsize_row = 4,
@@ -405,7 +426,7 @@ res <- pheatmap(Metsum_ROI_long_ISLAND,
          legend = T,
          show_rownames = F,
          legend_breaks = seq(0,100,10),
-          annotation_col = mat_col,
+          annotation_col = col_anno,
           annotation_row = row_anno,
          annotation_colors = ann_colors,
         # main = "All samples,  (n=148)",
@@ -441,7 +462,7 @@ Metsum_ROI_long_GBM <- na.omit(Metsum_ROI_long_ISLAND[GBMs$SampleID,])
          treeheight_row = 20,
          legend = T,
          legend_breaks = seq(0,100,10),
-         annotation_col = mat_col,
+         annotation_col = col_anno,
         # angle_col = 45,
          annotation_row = row_anno,
          annotation_colors = ann_colors,
@@ -476,11 +497,8 @@ pheatmap(Metsum_ROI_long_GBM,
          treeheight_row = 10,
          legend = T,
          legend_breaks = seq(0,100,10),
-         annotation_col = mat_col,
-        # angle_col = 45,
-        # annotation_row = row_anno,
-         #annotation_colors = ann_colors,
-        # main = "Glioblastoma samples ONLY (n=127)",
+         annotation_col = col_anno,
+         annotation_colors = ann_colors,
          legend_labels = c("0%","10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%")
 )
 ```
@@ -488,7 +506,7 @@ pheatmap(Metsum_ROI_long_GBM,
 
 {NEEDS UPDATE}Patient survival data is currently only available for 43 patients, including 37 GBM patients. Of these, 26 are primary GBMs. Comparison of survival of these 26 patients can be seen in figure 10. There is little difference between the results if patients are classified by pyrosequencing or nanopore sequencing, only two patients switch groups. We are expecting more data to strengthen these results. But they are promising: classification by nanopore sequencing is as good or better than pyrosequencing.
 ```{r KaplanMeier, echo=FALSE,  out.width="100%", out.height="100%", fig.cap="Kaplan-Meier Overall Survival curves"}
-Patient_meta <- read.csv("R-markdown/Data/Patient_Survival.csv")
+#Patient_meta <- read.csv("MGMT_R/R-markdown/Data/Patient_Survival.csv")
 
 MGMT_clusters <- data.frame(cluster=cutree(res$tree_row, k=2))
 

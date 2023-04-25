@@ -1,4 +1,4 @@
-all_results_MGMT <- read.csv("R-markdown/Data/Aggregated_MGMT_24102022.csv")
+all_results_MGMT <- read.csv("MGMT_R/R-markdown/Data/Aggregated_MGMT_24102022.csv")
 MGMT_RunSum <- read.csv("MGMT_R/R-markdown/Data/newRunsum.csv", row.names = 1)
 
 # Fetch the positions for the two STP27 CpGs
@@ -7,7 +7,7 @@ STP27_CpGs <- all_results_MGMT %>% filter(Pos == 131265208 | Pos == 131265574 )
 # make a column with the official epic array CpG IDs
 STP27_CpGs$CpG_ID <- ifelse(STP27_CpGs$Pos == 131265208, "cg12434587", "cg12981137")
 
-write.csv(STP27_CpGs, "R-markdown/Data/STP27_All_samples.csv")
+write.csv(STP27_CpGs, "MGMT_R/R-markdown/R-markdown/Data/STP27_All_samples.csv")
 
 library(dplyr)
 library(tidyr)
@@ -22,6 +22,17 @@ names(STP27_CpGs) <- c("Series", "SampleID", "cg12434587","cg12981137")
 STP27_CpGs <- left_join(STP27_CpGs, MGMT_RunSum)
 
 STP27_CpGs <- na.omit(STP27_CpGs)
+
+STP27_CpGs$Method <- NULL
+
+STP27_CpGs <- STP27_CpGs %>% group_by(SampleID) %>% mutate(Depth = sum(Depth)) %>% distinct()
+
+write.csv(STP27_CpGs, "MGMT_R/R-markdown/Data/STP27_All_samples.csv")
+
+#####################
+
+STP27_CpGs <- read.csv("MGMT_R/R-markdown/Data/STP27_All_samples.csv")
+
 
 STP27_CpGs <- STP27_CpGs %>% filter(Series != "DenStem")
 
@@ -38,8 +49,8 @@ ggplot(STP27_CpGs, aes(x=cg12434587, y=cg12981137, color=Known_status)) +
   scale_color_brewer(name="Known Status", palette = "Set1")+
  scale_y_sqrt(breaks=c(10,25,50,75,100))+
  scale_x_sqrt(breaks=c(10,25,50,75,100))+
-  theme_bw()
-  #facet_wrap(.~Series)
+  theme_bw()+
+  facet_wrap(.~Series)
 
 fun.1 <- function(x) 100/x
 
@@ -58,6 +69,6 @@ ggplot(STP27_CpGs, aes(x=cg12434587, y=cg12981137, color = Known_status)) +
   #geom_abline(intercept = 50, slope = -1, color="red")+
   theme_bw(base_size = 18)+
   theme(aspect.ratio = 1)+
-  facet_wrap(~factor(Series, levels = c("Rapid-CNS", "Radium")))
+  facet_wrap(~factor(Series, levels = c("Rapid-CNS", "Radium", "DenStem")))
 
 
