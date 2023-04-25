@@ -277,13 +277,13 @@ ggplot(p, aes(x=Known_status, y=Average_Meth_Nano, color = Known_status))+
 # Universal dot size
 ggplot(p, aes(x=Known_status, y=Average_Meth_Nano))+
   geom_hline(yintercept = 10)+
-  geom_beeswarm(aes(size = 4, color = Known_status), alpha = 0.7, cex=3.5)+
+  geom_beeswarm(aes(color = Known_status), alpha = 0.8,size = 2, cex=3)+
   scale_size_continuous(guide="none")+
   scale_color_brewer(palette = "Set1", guide="none")+
-  xlab("Known methylation status (PSQ)")+
+  xlab("Known methylation status")+
   ylab("Nanopore methylation (%)")+
   facet_grid(.~Series)+
-  theme(aspect.ratio = 2.5)+
+  #theme(aspect.ratio = 2.5)+
   theme_bw()
 
 ```
@@ -295,21 +295,26 @@ knitr::kable(p2)
 ```{r Confusion, echo=FALSE,out.width="100%"}
 # confusion matrix
 Series <- factor(c("Radium","Radium","Radium","Radium","Rapid-CNS","Rapid-CNS","Rapid-CNS","Rapid-CNS"))
-Nanopore <- factor(c("UnMethylated", "UnMethylated","Methylated", "Methylated","UnMethylated", "UnMethylated","Methylated", "Methylated"))
-PSQ <- factor(c("UnMethylated", "Methylated",  "UnMethylated","Methylated","UnMethylated", "Methylated",  "UnMethylated","Methylated"))
+Nanopore_status <- factor(c("Methylated", "UnMethylated","Methylated", "UnMethylated","UnMethylated", "UnMethylated","Methylated", "Methylated"))
+Known_status <- factor(c("Methylated", "Methylated",  "UnMethylated","UnMethylated","UnMethylated", "Methylated",  "UnMethylated","Methylated"))
 Y      <- c(32, 0, 6, 30,42,5,4,16)
-df <- data.frame(Series,Nanopore, PSQ, Y)
+df <- data.frame(Series,Nanopore_status, Known_status, Y)
+
+level_order <- c("UnMethylated",  "Methylated")
 
 library(ggplot2)
-ggplot(data =  df, mapping = aes(x = PSQ, y = Nanopore)) +
+ggplot(data =  df, mapping = aes(x = Known_status , y = Nanopore_status)) +
   geom_tile(aes(fill = Y), colour = "white") +
-  geom_text(aes(label = sprintf("%1.0f", Y)), vjust = 1, size = 18) +
+  geom_text(aes(label = sprintf("%1.0f", Y)), vjust = 0.5, size = 18) +
   scale_fill_gradient2(low = "red",
                        mid = "white",
                        high = "grey",
-                       midpoint = 5,) +
-  theme_bw(base_size = 18) + theme(legend.position = "none")+
-  facet_grid(.~Series)
+                       midpoint = 5,)+
+   scale_x_discrete(limits = level_order)+
+   scale_y_discrete(limits = level_order)+
+  theme_bw(base_size = 18)+ 
+  theme(legend.position = "none")+
+  facet_grid(Series~.)
 ```
 
 ```{r STP27, echo=FALSE, out.width="100%"}
@@ -331,6 +336,35 @@ ggplot(STP27_CpGs, aes(x=cg12434587, y=cg12981137, color = Known_status)) +
   theme_bw(base_size = 18)+
   theme(aspect.ratio = 1)+
   facet_wrap(~factor(Series, levels = c("Rapid-CNS", "Radium")))
+
+# STP27 confusion matrix
+
+Series <- factor(c("Radium","Radium","Radium","Radium","Rapid-CNS","Rapid-CNS","Rapid-CNS","Rapid-CNS"))
+Nanopore_STP27 <- factor(c("UnMethylated", "UnMethylated","Methylated", "Methylated","UnMethylated", "UnMethylated","Methylated", "Methylated"))
+Known_status <- factor(c("UnMethylated", "Methylated",  "UnMethylated","Methylated","UnMethylated", "Methylated",  "UnMethylated","Methylated"))
+Y      <- c(35, 8, 1, 24,46,0,0,21)
+df <- data.frame(Series,Nanopore_STP27, Known_status, Y)
+
+level_order <- c("UnMethylated",  "Methylated")
+
+df$Series <- factor(df$Series, levels = c("Rapid-CNS","Radium"))
+
+library(ggplot2)
+ggplot(data =  df, mapping = aes(x = Known_status , y = Nanopore_STP27)) +
+  geom_tile(aes(fill = Y), colour = "white") +
+  geom_text(aes(label = sprintf("%1.0f", Y)), vjust = 0.5, size = 18) +
+  scale_fill_gradient2(low = "red",
+                       mid = "white",
+                       high = "grey",
+                       midpoint = 5,)+
+  ylab("STP27 Nanopore")+
+  xlab("Known status")+
+   scale_x_discrete(limits = level_order)+
+   scale_y_discrete(limits = level_order)+
+  theme_bw(base_size = 18)+ 
+  theme(legend.position = "none")+
+  facet_grid(.~Series)
+
 
 ```
 
@@ -408,9 +442,9 @@ library(RColorBrewer)
 Metsum_ROI_long_ISLAND <- Metsum_ROI_long[c(2:nrow(Metsum_ROI_long)),c(8:105)]
 
 ##### Removing DenStem Samples
-Metsum_ROI_long_ISLAND <- Metsum_ROI_long_ISLAND[c(1:128),]
+Metsum_ROI_long_ISLAND_DENREMOVED <- Metsum_ROI_long_ISLAND[c(1:128),]
 
-res <- pheatmap(Metsum_ROI_long_ISLAND,
+pheatmap(Metsum_ROI_long_ISLAND_DENREMOVED,
          cluster_rows = T, 
          cluster_cols = F,
          clustering_method = "ward.D",
@@ -433,7 +467,7 @@ res <- pheatmap(Metsum_ROI_long_ISLAND,
          legend_labels = c("0%","10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%")
          )
 
-res
+
 ```
 
 Unsupervised clustering of all the samples included in the study shows very clear separation of methylated and unmethylated samples (Figure 7). The samples previously defined as unmethylated have very low methylation throughout the CpG island apart from the first 5 CpGs that are often methylated. Samples previously defined as methylated have a gradient of methylation which tends to show highest methylation values towards either end of the CpG island. Only six samples samples do not cluster according to their previously determined methylation status. Four of these samples belong to the DenStem cohort that is not directly comparable, as previously mentioned. A single sample from the Radium cohort was classified as methylated by pyrosequencing but clusters with the unmethylated samples. This sample is interesting as it has robust methylation in the fist exon but very low methylation elsewhere in the CpG island.
@@ -507,6 +541,15 @@ pheatmap(Metsum_ROI_long_GBM,
 {NEEDS UPDATE}Patient survival data is currently only available for 43 patients, including 37 GBM patients. Of these, 26 are primary GBMs. Comparison of survival of these 26 patients can be seen in figure 10. There is little difference between the results if patients are classified by pyrosequencing or nanopore sequencing, only two patients switch groups. We are expecting more data to strengthen these results. But they are promising: classification by nanopore sequencing is as good or better than pyrosequencing.
 ```{r KaplanMeier, echo=FALSE,  out.width="100%", out.height="100%", fig.cap="Kaplan-Meier Overall Survival curves"}
 #Patient_meta <- read.csv("MGMT_R/R-markdown/Data/Patient_Survival.csv")
+
+res <- pheatmap(Metsum_ROI_long_ISLAND,
+         cluster_rows = T, 
+         cluster_cols = F,
+         clustering_method = "ward.D",
+         cutree_rows = 2,
+         scale = "none",
+         drop_levels = T,
+         )
 
 MGMT_clusters <- data.frame(cluster=cutree(res$tree_row, k=2))
 
