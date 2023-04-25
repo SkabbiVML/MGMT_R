@@ -330,8 +330,8 @@ ggplot(STP27_CpGs, aes(x=cg12434587, y=cg12981137, color = Known_status)) +
   geom_point(aes(size=3), alpha = 0.6)+
   scale_size_continuous(name="Depth",breaks = c(5,15,25,100,150), range = c(1,8), guide="none")+
   scale_color_brewer(name="Known Status", palette = "Set1")+
-  scale_x_sqrt(limits = c(0,100),breaks=c(10,25,50,75,100))+
-  scale_y_sqrt(limits = c(0,100),breaks=c(10,25,50,75,100))+
+  scale_x_sqrt(limits = c(0,100),breaks=c(1,10,25,50,75,100))+
+  scale_y_sqrt(limits = c(0,100),breaks=c(1,10,25,50,75,100))+
   guides(colour = guide_legend(override.aes = list(size=5)))+
   theme_bw(base_size = 18)+
   theme(aspect.ratio = 1)+
@@ -421,7 +421,7 @@ library(corrplot)
 colnames(Metsum_ROI_long) <- c(-7:-1, 1:98,c("+1","+2", "+3","+4", "+5", "+6", "+7", "+8", "+9", "+10"))
 
 # correlation of CpGs
-corrplot(cor(Metsum_ROI_long), 
+corrplot(cor(Metsum_ROI_long_ISLAND), 
          method = "color",
          order = "original",
          #hclust.method = "ward.D",
