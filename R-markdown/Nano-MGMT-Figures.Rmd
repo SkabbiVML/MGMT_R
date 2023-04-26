@@ -408,9 +408,9 @@ library(RColorBrewer)
 Metsum_ROI_long_ISLAND <- Metsum_ROI_long[c(2:nrow(Metsum_ROI_long)),c(8:105)]
 
 ##### Removing DenStem Samples
-Metsum_ROI_long_ISLAND <- Metsum_ROI_long_ISLAND[c(1:128),]
+Metsum_ROI_long_ISLAND_DENREMOVE <- Metsum_ROI_long_ISLAND[c(1:128),]
 
-res <- pheatmap(Metsum_ROI_long_ISLAND,
+res <- pheatmap(Metsum_ROI_long_ISLAND_DENREMOVE,
          cluster_rows = T, 
          cluster_cols = F,
          clustering_method = "ward.D",
@@ -420,7 +420,7 @@ res <- pheatmap(Metsum_ROI_long_ISLAND,
          scale = "none",
          drop_levels = T,
          color = rev(brewer.pal(n = 10, name = "Spectral")),
-         fontsize_col = 16,
+         fontsize_col = 8,
          fontsize_row = 4,
          fontsize = 14,
          legend = T,
@@ -508,17 +508,24 @@ pheatmap(Metsum_ROI_long_GBM,
 ```{r KaplanMeier, echo=FALSE,  out.width="100%", out.height="100%", fig.cap="Kaplan-Meier Overall Survival curves"}
 #Patient_meta <- read.csv("MGMT_R/R-markdown/Data/Patient_Survival.csv")
 
-MGMT_clusters <- data.frame(cluster=cutree(res$tree_row, k=2))
+res <- pheatmap(Metsum_ROI_long_ISLAND,
+         cluster_rows = T, 
+         cluster_cols = F,
+         clustering_method = "ward.D",
+         cutree_rows = 2,
+         drop_levels = T
+         )
+
+MGMT_clusters <- data.frame(cluster=cutree(res$tree_row, k=2)) # Get cluster information from heatmap
 
 MGMT_clusters$Sample_ID <- rownames(MGMT_clusters)
 
-cluster_surv <- inner_join(MGMT_clusters, Patient_meta, by="Sample_ID")
+cluster_surv <- inner_join(MGMT_clusters, Patient_meta, by="Sample_ID") # add cluster info to patient metadata
 
-cluster_surv <- cluster_surv %>% filter(Diagnosis == "GBM")
+cluster_surv$months_to_event <- as.numeric(cluster_surv$months_to_event) 
 
-cluster_surv$months_to_event <- as.numeric(cluster_surv$months_to_event)
+cluster_surv_filt <- cluster_surv %>% filter(Diagnosis == "GBM" & Reopr == 0 & Onc.treatment == "Stupp") # filter to only include primary GBMs that received full treatment
 
-cluster_surv_filt <- cluster_surv %>% filter(Reopr == 0)
 
 ####################### Survival
 library(survival)
@@ -526,13 +533,15 @@ library(survminer)
 library(lubridate)
 
 # Unfiltered
-fit1 <- survfit( Surv(cluster_surv$months_to_event, cluster_surv$censor) ~ cluster_surv$Pyro_state)
-fit2 <- survfit( Surv(cluster_surv$months_to_event, cluster_surv$censor) ~ cluster_surv$cluster)
+# fit1 <- survfit( Surv(cluster_surv$months_to_event, cluster_surv$censor) ~ cluster_surv$Pyro_state)
+# fit2 <- survfit( Surv(cluster_surv$months_to_event, cluster_surv$censor) ~ cluster_surv$cluster)
 
 
 # Reopr filtered out
 fit1_filt <- survfit( Surv(cluster_surv_filt$months_to_event, cluster_surv_filt$censor) ~ cluster_surv_filt$Pyro_state)
 fit2_filt <- survfit( Surv(cluster_surv_filt$months_to_event, cluster_surv_filt$censor) ~ cluster_surv_filt$cluster)
+
+# fit3_filt <- survfit( Surv(cluster_surv_filt$months_to_event, cluster_surv_filt$censor) ~ cluster_surv_filt$Resection)
 
 
 
@@ -570,6 +579,23 @@ ggsurvplot(
   font.x = c(14, "bold", "black"),
   font.y = c(14, "bold", "black"),
   risk.table = TRUE)
+
+# # By resection type
+# ggsurvplot(
+#   fit = fit3_filt,
+#   data = cluster_surv_filt,
+#   
+#   #palette = c("cornflowerblue","darkorange3"),
+#   xlab = "OS, Months", 
+#   ylab = "Overall survival probability",
+#   legend.title = "Nanopore",
+#   #legend.labs = c("Cluster 1", "Cluster 2", "Cluster 3"),
+#   #legend.labs = c("Cluster 1", "Cluster 2"),
+#   pval = TRUE,
+#   pval.coord = c(0, 0.1),
+#   font.x = c(14, "bold", "black"),
+#   font.y = c(14, "bold", "black"),
+#   risk.table = TRUE)
 
 ```
 
