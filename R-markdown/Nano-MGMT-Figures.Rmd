@@ -63,7 +63,7 @@ library(kableExtra)
 library(RColorBrewer)
 library(scales)
 
-load("Data/MGMT_R.Rdata")
+load("MGMT_R/R-markdown/Data/MGMT_R.Rdata")
 #MGMT_RunSum <- read.csv("MGMT_R/R-markdown/Data/newRunsum.csv", row.names = 1)
 
 # Summarize and count tumors
@@ -335,7 +335,8 @@ ggplot(STP27_CpGs, aes(x=cg12434587, y=cg12981137, color = Known_status)) +
   guides(colour = guide_legend(override.aes = list(size=5)))+
   theme_bw(base_size = 18)+
   theme(aspect.ratio = 1)+
-  facet_wrap(~factor(Series, levels = c("Rapid-CNS", "Radium")))
+  #facet_wrap(~factor(Series, levels = c("Rapid-CNS", "Radium")))
+  facet_wrap(.~Series)
 
 # STP27 confusion matrix
 
@@ -398,7 +399,7 @@ t3 <- t3 %>% filter(Series != "DenStem")
 # Beeswarm based on cumulative methylation
 
 ggplot(t3, aes(x=Known_status, y=CumMeth, color = Known_status))+
-  #geom_hline(yintercept = 45)+
+  geom_violin(alpha=0.6)+
   geom_beeswarm(aes(size = Depth), alpha = 0.6, cex=3)+
   scale_size_continuous(name="Depth",breaks = c(5,10,50,100), range = c(1,10) )+
   scale_color_brewer(palette = "Set1", guide="none")+
@@ -407,7 +408,7 @@ ggplot(t3, aes(x=Known_status, y=CumMeth, color = Known_status))+
   ylab("Cumulative methylation per nanopore")+
   #facet_grid(.~Series)+
   theme_bw(base_size = 14)+
-  facet_grid(.~Series)
+  facet_grid(~factor(Series, levels = c("Rapid-CNS", "Radium")))
 
 ```
 

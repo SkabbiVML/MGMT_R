@@ -54,21 +54,35 @@ ggplot(STP27_CpGs, aes(x=cg12434587, y=cg12981137, color=Known_status)) +
 
 fun.1 <- function(x) 100/x
 
+fun.2 <- function(x) log(y) = -3*log(x)+log(1/3)
+
 ggplot(STP27_CpGs, aes(x=cg12434587, y=cg12981137, color = Known_status)) + 
-  stat_function(fun = fun.1, color = "grey", size = 2) + 
-  geom_point(aes(size=3), alpha = 0.6)+
-  scale_size_continuous(name="Depth",breaks = c(5,15,25,100,150), range = c(1,8), guide="none")+
+  stat_function(fun = fun.2, color = "black", size = 1) + 
+  geom_point(aes(size=Depth),alpha = 0.6)+
+  #scale_size_continuous(name="Depth",breaks = c(5,15,25,100,150), range = c(1,8), guide="none")+
   scale_color_brewer(name="Known Status", palette = "Set1")+
   #   scale_y_sqrt(breaks=c(10,25,50,75,100))+
   #   scale_x_sqrt(breaks=c(10,25,50,75,100))+
   # xlim(0,100)+
   # ylim(0,100)+
-  scale_x_sqrt(limits = c(0,100),breaks=c(10,25,50,75,100))+
-  scale_y_sqrt(limits = c(0,100),breaks=c(10,25,50,75,100))+
-  guides(colour = guide_legend(override.aes = list(size=5)))+
+  scale_x_sqrt(limits = c(0,100),breaks=c(0.1,1,10,25,50,75,100))+
+  scale_y_sqrt(limits = c(0,100),breaks=c(0.1,1,10,25,50,75,100))+
+  #guides(colour = guide_legend(override.aes = list(size=5)))+
   #geom_abline(intercept = 50, slope = -1, color="red")+
   theme_bw(base_size = 18)+
   theme(aspect.ratio = 1)+
   facet_wrap(~factor(Series, levels = c("Rapid-CNS", "Radium", "DenStem")))
 
+############ Add sum and mean of STP27 CpGs
 
+STP27_CpGs <- STP27_CpGs %>% 
+  mutate(Sum_STP = cg12434587+cg12981137) %>%
+  mutate(Mean_STP = Sum_STP/2)
+
+ggplot(STP27_CpGs, aes(x=Known_status, y=Sum_STP, color = Known_status)) +
+  geom_beeswarm()+
+  facet_grid(.~Series)
+
+ggplot(STP27_CpGs, aes(x=Known_status, y=Mean_STP, color = Known_status)) +
+  geom_beeswarm()+
+  facet_grid(.~Series)

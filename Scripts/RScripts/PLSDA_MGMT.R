@@ -1,35 +1,123 @@
 setwd("~/MGMT_stuff") # Home desktop
 
 
-Radium <- read.csv("MGMT_Radium/Radium_MGMT_Methylation_summary.csv", header = T, row.names = 1)
-colnames(Radium) <- c(-6:-1, 1:98,c("+1","+2", "+3","+4", "+5", "+6", "+7", "+8", "+9"))
+colnames(Metsum_ROI_long) <- c(-7:-1, 1:98,c("+1","+2", "+3","+4", "+5", "+6", "+7", "+8", "+9", "+10"))
 
-X1 <- Radium[c(6:nrow(Radium)),]
+X1 <- Metsum_ROI_long[c(2:129),]
 
-Radium_names <- rownames(X1)
+#X1 <- logratio.transfo(X1,logratio = "CLR")
 
-X1 <- sapply(X1, as.numeric)
-rownames(X1) <- Radium_names
+Y1 <- MGMT_RunSum %>% 
+  filter(Series != "DenStem") %>% 
+  dplyr::select(SampleID,Known_status) %>% 
+  distinct() %>% 
+  na.omit()
 
-row_anno <- read.csv("Row_annotation.csv", header = T, row.names = 1)
+rownames(Y1) <- Y1$SampleID 
 
-Anno_Radium <- row_anno[rownames(X1),]
+Y1 <- Y1[rownames(X1),2]
 
-Y1 <- Anno_Radium$PyroSeq
 
 library(mixOmics)
-plsda.Rad <- plsda(X1,Y1, ncomp = 5)
 
-plotIndiv(plsda.Rad)
+#### SImple PCA
 
-perf.plsda.Rad <- perf(plsda.Rad, validation = 'Mfold', folds = 4, 
+pca.meth <- pca(X1, ncomp = 10,center = TRUE, scale = TRUE)
+
+plotIndiv(pca.meth, 
+          ind.names = F,
+          group = Y1 )
+
+spca.meth <- spca(X1, ncomp = 10, center = TRUE)
+
+plotIndiv(spca.meth, 
+          ind.names = F,
+          group = Y1 )
+
+plot(pca.meth)
+
+
+
+##### Simple PLS-DA
+
+plsda.Meth <- plsda(X1,Y1, ncomp = 5)
+
+plotIndiv(plsda.Meth, 
+          ind.names = F,
+          group = Y1 )
+
+
+######### sPLS-DA
+
+
+splsda.Meth <- splsda(X1,Y1,ncomp = 5)
+
+
+plotIndiv(splsda.Meth, comp = 1:2,
+          group = Y1,
+          ind.names = F,
+          ellipse = T)
+
+
+
+perf.plsda.Meth <- perf(plsda.Meth, validation = 'Mfold', folds = 5, 
                           progressBar = T,  # Set to TRUE to track progress
                           nrepeat = 50)         # We suggest nrepeat = 50
 
+plot(perf.plsda.Meth)
 
-plot(perf.plsda.Rad, sd = TRUE, legend.position = 'horizontal') #two components, max.dist
+perf.plsda.Meth$choice.ncomp# Select 2 components, max distance
 
-final.plsda.Rad <- plsda(X1,Y1, ncomp = 2)
+# grid of possible keepX values that will be tested for each component
+list.keepX <- c(1:10,  seq(12, 30, 2))
+
+# undergo the tuning process to determine the optimal number of variables
+tune.splsda.Meth <- tune.splsda(X1, Y1, ncomp = 2, # calculate for first 4 components
+                                 validation = 'Mfold',
+                                 folds = 5, nrepeat = 50, # use repeated cross-validation
+                                 dist = 'max.dist', # use max.dist measure
+                                 measure = "BER", # use balanced error rate of dist measure
+                                 test.keepX = list.keepX,
+                                 progressBar = T,
+                                 cpus = 4) # allow for paralleliation to decrease runtime
+
+
+plot(tune.splsda.Meth)
+
+
+tune.splsda.Meth$choice.ncomp$ncomp # 2 components
+
+tune.splsda.Meth$choice.keepX # comp 1: 30, comp2:10
+
+# store values for final model
+
+optimal.ncomp <- tune.splsda.Meth$choice.ncomp$ncomp
+optimal.keepX <- tune.splsda.Meth$choice.keepX[1:optimal.ncomp]
+
+#### Final spls-da model
+
+final.splsda.Meth <- splsda(X1,Y1,ncomp = optimal.ncomp, scale = T, 
+                            keepX = optimal.keepX)
+
+
+#### Final spls-Da plot
+
+plotIndiv(final.splsda.Meth, comp = c(1,2), group = Y1, ind.names = F, ellipse = T, ellipse.level = 0.90)
+
+
+######## heatmap
+
+legend=list(legend = as.factor(unique(MGMT_RunSum$Known_status)), # 
+            col = RColorBrewer::brewer.pal(3,"Set1"), # set of colours
+            title = "Known methylation", # legend title
+            cex = 0.7) # legend size
+
+
+cim(final.splsda.Meth, legend = legend, row.sideColors = RColorBrewer::brewer.pal(3,"Set1"))
+
+
+final.plsda.Rad <- plsda(X1,Y1, ncomp = 2) 
+
 
 plotIndiv(final.plsda.Rad)
 
@@ -69,7 +157,7 @@ plot(tune.splsda.Rad, sd = TRUE)
 select.keepX <- tune.splsda.Rad$choice.keepX[1:2]
 
 # sparse PLS-DA models
-splsda.Rad <- splsda(X1, Y1, ncomp = 2, keepX = select.keepX)
+splsda.Rad <- splsda(X1, Y1, ncomp = 2, keepX = 10)
 
 perf.splsda.Rad <- perf(splsda.Rad, folds = 5, validation = "Mfold", 
                            dist = "max.dist", progressBar = T, nrepeat = 100)
