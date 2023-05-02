@@ -105,15 +105,15 @@ ggplot(MGMT_RunSum, aes(y=Diagnosis, fill=Known_status))+
 Also simplified version
 
 ```{r Methylation_overview_simplified, echo=FALSE, out.width="100%", fig.cap="Distribution of methylated versus unmethylated samples according to known status prior to nanopore sequencing"}
-barplot_data <- MGMT_RunSum %>% select(c(SampleID, Diagnosis, Known_status)) %>%
+barplot_data <- MGMT_RunSum %>% dplyr::select(c(SampleID, Diagnosis, Known_status)) %>%
   distinct() %>%
   group_by(Diagnosis, Known_status) %>%
   tally() %>%
   spread(Diagnosis,n) %>%
   replace(is.na(.), 0) %>%
-  mutate(Other = rowSums(select(.,c(LGG_PA,ATRT_SHH, Ganglioglioma, HPC, Medulloblastoma, PCNSL, PXA, Metastasis, Unknown)))) %>%
-  mutate('IDH-glioma' = rowSums(select(.,c(Astrocytoma,`Astrocytoma HG`, Oligodendroglioma)))) %>%
-  select(c(Known_status,'IDH-glioma',Meningioma, Glioblastoma, Other)) %>%
+  dplyr::mutate(Other = rowSums(dplyr::select(.,c(LGG_PA,ATRT_SHH, Ganglioglioma, HPC, Medulloblastoma, PCNSL, PXA, Metastasis, Unknown)))) %>%
+  dplyr::mutate('IDH-glioma' = rowSums(dplyr::select(.,c(Astrocytoma,`Astrocytoma HG`, Oligodendroglioma)))) %>%
+  dplyr::select(c(Known_status,'IDH-glioma',Meningioma, Glioblastoma, Other)) %>%
   gather(key=Diagnosis, value = Samples, -Known_status)
 
 
@@ -470,6 +470,33 @@ res <- pheatmap(Metsum_ROI_long_ISLAND_DENREMOVE,
 
 
 ```
+
+```{r Dotline, echo=FALSE,  out.width="100%" }
+x <- Metsum_ROI_long[c(2:129),]
+
+colnames(x) <- c(-7:-1, 1:108)
+
+x$SampleID <- rownames(x)
+
+y2 <- MGMT_RunSum %>% dplyr::select(SampleID,Known_status)
+
+x2 <- left_join(x, y2) %>% na.omit() %>% gather(key = "CpG", value = "percentMeth", -c(Known_status,SampleID))
+
+x3 <- x2 %>% group_by(Known_status, CpG) %>% summarise(Average_Methylation = mean(percentMeth), SD_Methylation = sd(percentMeth))
+
+
+x3$CpG <- as.integer(x3$CpG)
+
+ggplot(x3, aes(x=CpG, y=Average_Methylation, group =  Known_status))+
+  geom_point(aes(color=Known_status), position = position_dodge(width = 0.9), size = 2)+
+#  guides(color = guide_legend(override.aes = list(size=2)))+
+  geom_linerange(aes(ymin=Average_Methylation-SD_Methylation, ymax=Average_Methylation+SD_Methylation,color=Known_status),position = position_dodge(width = 0.9))+
+  scale_color_brewer(palette = "Set1")+
+  geom_line(aes(color=Known_status))+
+  geom_smooth(aes(color=Known_status), show.legend = FALSE)+
+  theme_bw(base_size = 14)
+```
+
 
 Unsupervised clustering of all the samples included in the study shows very clear separation of methylated and unmethylated samples (Figure 7). The samples previously defined as unmethylated have very low methylation throughout the CpG island apart from the first 5 CpGs that are often methylated. Samples previously defined as methylated have a gradient of methylation which tends to show highest methylation values towards either end of the CpG island. Only six samples samples do not cluster according to their previously determined methylation status. Four of these samples belong to the DenStem cohort that is not directly comparable, as previously mentioned. A single sample from the Radium cohort was classified as methylated by pyrosequencing but clusters with the unmethylated samples. This sample is interesting as it has robust methylation in the fist exon but very low methylation elsewhere in the CpG island.
 

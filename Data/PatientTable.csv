@@ -1,0 +1,26 @@
+"","Sample_ID","Age","Sex","Diagnosis","IDH","Resection","Onc.treatment","OS (months)","Status","Pyro_state","NP_cluster"
+"1","1701-2275",66,"F","GBM","Neg","GTR","Stupp",14.99,"Dead","UnMethylated",1
+"2","1701-2430",78,"M","GBM","Neg","GTR  ","Stupp",5.19,"Dead","Methylated",2
+"3","1701-2590",58,"M","GBM","Neg","STR","Stupp",24.5,"Dead","Methylated",2
+"4","1701-2623",57,"F","GBM","Neg","STR","Stupp",28.77,"Dead","Methylated",2
+"5","1701-2769",73,"M","GBM","Neg","STR","Stupp",20.91,"Dead","UnMethylated",1
+"6","1701-2950",77,"M","GBM","Neg","STR","Stupp",11.97,"Dead","UnMethylated",1
+"7","1501-1486",60,"M","GBM","Neg","GTR","Stupp",29.26,"Dead","Methylated",2
+"8","1501-1757",65,"M","GBM","Neg","STR","Stupp",29.69,"Dead","Methylated",2
+"9","1501-1858",62,"F","GBM","Neg","STR","Stupp",6.9,"Dead","UnMethylated",1
+"10","1501-1880",64,"M","GBM","Neg","STR","Stupp",25.48,"Dead","Methylated",2
+"11","1501-2159",58,"M","GBM","Neg","STR","Stupp",21.6,"Dead","Methylated",2
+"12","1501-2348",58,"M","GBM","Neg","STR","Stupp",11.44,"Dead","UnMethylated",1
+"13","1501-2391",72,"F","GBM","Neg","STR","Stupp",21.21,"Dead","Methylated",2
+"14","1501-2425",58,"F","GBM","Neg","STR","Stupp",13.61,"Dead","Methylated",2
+"15","1601-0227",66,"M","GBM","Neg","STR","Stupp",21.96,"Dead","Methylated",2
+"16","1601-0353",51,"M","GBM","Neg","GTR","Stupp",12.85,"Dead","Methylated",2
+"17","T20-061",64,"F","GBM","Neg","STR","Stupp",8.3,"Dead","Methylated",1
+"18","T20-192",52,"F","GBM","Neg","STR","Stupp",23,"Dead","Methylated",2
+"19","T21-173",66,"F","GBM","Neg","STR","Stupp",13.6,"Dead","Methylated",2
+"20","T21-214",49,"M","GBM","Neg","GTR","Stupp",9.4,"Dead","UnMethylated",1
+"21","T21-216",46,"F","GBM","Neg","GTR","Stupp",14.31,"Alive","Methylated",2
+"22","T21-224",60,"F","GBM","Neg","GTR","Stupp",14.08,"Alive","Methylated",1
+"23","T21-240",55,"M","GBM","Neg","GTR","Stupp",15.16,"Alive","UnMethylated",2
+"24","T21-242",66,"M","GBM","Neg","GTR","Stupp",14.47,"Alive","Methylated",2
+"25","T21-326",39,"F","GBM","Neg","GTR","Stupp",13.78,"Alive","Methylated",1
