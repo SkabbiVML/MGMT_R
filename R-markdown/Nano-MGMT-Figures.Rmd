@@ -570,7 +570,7 @@ pheatmap(Metsum_ROI_long_GBM,
 ```{r KaplanMeier, echo=FALSE,  out.width="100%", out.height="100%", fig.cap="Kaplan-Meier Overall Survival curves"}
 #Patient_meta <- read.csv("MGMT_R/R-markdown/Data/Patient_Survival.csv")
 
-res <- pheatmap(Metsum_ROI_long_ISLAND,
+res <- pheatmap(Metsum_ROI_long,
          cluster_rows = T,
          cluster_cols = F,
          clustering_method = "ward.D",
