@@ -68,9 +68,9 @@ load("MGMT_R/R-markdown/Data/MGMT_R.Rdata")
 
 # Summarize and count tumors
 Table <- MGMT_RunSum %>%
-  select(SampleID,Series,Diagnosis) %>%
+  dplyr::select(SampleID,Series,Diagnosis) %>%
   distinct() %>%
-  group_by(Series,Diagnosis) %>%
+  dplyr::group_by(Series,Diagnosis) %>%
   tally() %>%
   spread(Diagnosis,n) %>%
   replace(is.na(.), 0) %>%
@@ -321,11 +321,13 @@ ggplot(data =  df, mapping = aes(x = Known_status , y = Nanopore_status)) +
 #STP27_CpGs <- read.csv("MGMT_R/R-markdown/Data/STP27_All_samples.csv")
 
 
+#STP27_CpGs <- STP27_CpGs %>% filter(Series != "DenStem" & Diagnosis == "Glioblastoma")
 STP27_CpGs <- STP27_CpGs %>% filter(Series != "DenStem")
+STP27_CpGs <- STP27_CpGs %>% filter(Diagnosis == "Glioblastoma")
 
 fun.1 <- function(x) 100/x
 
-ggplot(STP27_CpGs, aes(x=cg12434587, y=cg12981137, color = Known_status)) +
+ggplot(STP27_CpGs, aes(y=cg12434587, x=cg12981137, color = Known_status)) +
   stat_function(fun = fun.1, color = "grey", size = 2) +
   geom_point(aes(size=3), alpha = 0.6)+
   scale_size_continuous(name="Depth",breaks = c(5,15,25,100,150), range = c(1,8), guide="none")+
@@ -334,9 +336,10 @@ ggplot(STP27_CpGs, aes(x=cg12434587, y=cg12981137, color = Known_status)) +
   scale_y_sqrt(limits = c(0,100),breaks=c(1,10,25,50,75,100))+
   guides(colour = guide_legend(override.aes = list(size=5)))+
   theme_bw(base_size = 18)+
-  theme(aspect.ratio = 1)+
+  facet_wrap(.~Series)+
+  theme(aspect.ratio = 1)
   #facet_wrap(~factor(Series, levels = c("Rapid-CNS", "Radium")))
-  facet_wrap(.~Series)
+  
 
 # STP27 confusion matrix
 
@@ -472,6 +475,10 @@ res <- pheatmap(Metsum_ROI_long_ISLAND_DENREMOVE,
 ```
 
 ```{r Dotline, echo=FALSE,  out.width="100%" }
+
+library(purrr)
+library(rstatix)
+
 x <- Metsum_ROI_long[c(2:129),]
 
 colnames(x) <- c(-7:-1, 1:108)
@@ -495,6 +502,30 @@ ggplot(x3, aes(x=CpG, y=Average_Methylation, group =  Known_status))+
   geom_line(aes(color=Known_status))+
   geom_smooth(aes(color=Known_status), show.legend = FALSE)+
   theme_bw(base_size = 14)
+
+### t-test for every CpG
+X2Ttest <- x2 %>%
+  dplyr::select(c(2:4)) %>%
+  dplyr::group_by(CpG,Known_status) %>%
+  tidyr::nest() %>%
+  spread(key = Known_status, value = data) %>%
+  dplyr::mutate(
+    t_test = map2(Methylated,UnMethylated,~{t.test(.x$percentMeth,.y$percentMeth) %>% tidy()}),
+    Methylated = map(Methylated,nrow),
+    UnMethylated = map(UnMethylated,nrow)
+  ) %>%
+  tidyr::unnest(cols = c(Methylated, UnMethylated, t_test))
+
+X2Ttest$adj.p.val <- p.adjust(X2Ttest$p.value, method = "bonferroni", n = length(X2Ttest$p.value))
+
+X2Ttest$CpG <- as.integer(c(-7:-1, 1:108))
+
+ggplot(X2Ttest, aes(x=CpG, y=adj.p.val))+
+  geom_point()+
+  geom_line()+
+  scale_y_log10()+
+  geom_hline(yintercept = 0.01)+  
+  theme_bw()
 ```
 
 
@@ -504,9 +535,9 @@ We can also look at methylation patterns specifically in the glioblastoma sample
 
 ```{r HeatmapGBM, echo=FALSE,  out.width="100%", out.height="100%", fig.cap="Heatmap showing unsupervised clustering of glioblastoma samples based on nanopore sequencing of the CpG island in the MGMT promoter"}
 
-GBMs <- MGMT_RunSum %>% select(SampleID,Diagnosis) %>% filter(Diagnosis == "Glioblastoma") %>% distinct()
+GBMs <- MGMT_RunSum %>% dplyr::select(SampleID,Diagnosis) %>% dplyr::filter(Diagnosis == "Glioblastoma") %>% distinct()
 
-Metsum_ROI_long_GBM <- na.omit(Metsum_ROI_long_ISLAND[GBMs$SampleID,])
+Metsum_ROI_long_GBM <- na.omit(Metsum_ROI_long[GBMs$SampleID,])
 
  pheatmap(Metsum_ROI_long_GBM,
          cluster_rows = T,
@@ -624,6 +655,7 @@ ggsurvplot(
   pval.coord = c(0, 0.1),
   font.x = c(14, "bold", "black"),
   font.y = c(14, "bold", "black"),
+ surv.median.line = "hv",
   risk.table = TRUE)
 
 # By nanopore clustering
@@ -641,6 +673,7 @@ ggsurvplot(
   pval.coord = c(0, 0.1),
   font.x = c(14, "bold", "black"),
   font.y = c(14, "bold", "black"),
+ surv.median.line = "hv",
   risk.table = TRUE)
 
 # # By resection type
