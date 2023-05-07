@@ -487,9 +487,12 @@ x$SampleID <- rownames(x)
 
 y2 <- MGMT_RunSum %>% dplyr::select(SampleID,Known_status)
 
-x2 <- left_join(x, y2) %>% na.omit() %>% gather(key = "CpG", value = "percentMeth", -c(Known_status,SampleID))
+x2 <- left_join(x, y2) %>% na.omit() 
 
-x3 <- x2 %>% group_by(Known_status, CpG) %>% summarise(Average_Methylation = mean(percentMeth), SD_Methylation = sd(percentMeth))
+x3 <- x2  %>% 
+  gather(key = "CpG", value = "percentMeth", -c(Known_status,SampleID)) %>% 
+  group_by(Known_status, CpG) %>% 
+  summarise(Average_Methylation = mean(percentMeth), SD_Methylation = sd(percentMeth))
 
 
 x3$CpG <- as.integer(x3$CpG)
@@ -504,23 +507,16 @@ ggplot(x3, aes(x=CpG, y=Average_Methylation, group =  Known_status))+
   theme_bw(base_size = 14)
 
 ### t-test for every CpG
-X2Ttest <- x2 %>%
-  dplyr::select(c(2:4)) %>%
-  dplyr::group_by(CpG,Known_status) %>%
-  tidyr::nest() %>%
-  spread(key = Known_status, value = data) %>%
-  dplyr::mutate(
-    t_test = map2(Methylated,UnMethylated,~{t.test(.x$percentMeth,.y$percentMeth) %>% tidy()}),
-    Methylated = map(Methylated,nrow),
-    UnMethylated = map(UnMethylated,nrow)
-  ) %>%
-  tidyr::unnest(cols = c(Methylated, UnMethylated, t_test))
+P_list <- lapply(x2[,CpGs], function(x) t.test(x ~ x2$Known_status, var.equal = FALSE)$p.value)
+P_frame <- as.data.frame(unlist(P_list))
+names(P_frame) <- "p.val"
 
-X2Ttest$adj.p.val <- p.adjust(X2Ttest$p.value, method = "bonferroni", n = length(X2Ttest$p.value))
+P_frame$adj.p.val <- p.adjust(P_frame$p.val, method = "bonferroni", n = length(P_frame$p.val))
 
-X2Ttest$CpG <- as.integer(c(-7:-1, 1:108))
 
-ggplot(X2Ttest, aes(x=CpG, y=adj.p.val))+
+P_frame$CpG <- as.integer(rownames(P_frame))
+
+ggplot(P_frame, aes(x=CpG, y=adj.p.val))+
   geom_point()+
   geom_line()+
   scale_y_log10()+
