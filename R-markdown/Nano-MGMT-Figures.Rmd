@@ -369,6 +369,26 @@ ggplot(data =  df, mapping = aes(x = Known_status , y = Nanopore_STP27)) +
   theme(legend.position = "none")+
   facet_grid(.~Series)
 
+#### Average methylation over STP27 sites
+
+STP27_CpGs <- STP27_CpGs %>% 
+  mutate(Sum_STP = cg12434587+cg12981137) %>%
+  mutate(Mean_STP = Sum_STP/2)                                      
+
+
+# Beeswarm based on cumulative methylation
+
+ggplot(STP27_CpGs, aes(x=Known_status, y=Mean_STP, color = Known_status))+
+  #geom_violin(alpha=0.6)+
+  # geom_beeswarm(size = 4, alpha = 0.6, cex=3)+
+   geom_beeswarm(aes(size = Depth), alpha = 0.6, cex=3)+
+   scale_size_continuous(name="Depth",breaks = c(5,10,50,100), range = c(1,10) )+
+  scale_color_brewer(palette = "Set1", guide="none")+
+  xlab("Known methylation status")+
+  ylab("Average methylation % \n of cg12434587 and cg12981137")+
+  theme_bw(base_size = 14)+
+ # facet_grid(~factor(Series, levels = c("Rapid-CNS", "Radium")))
+facet_grid(.~Series)
 
 ```
 
@@ -376,6 +396,8 @@ ggplot(data =  df, mapping = aes(x = Known_status , y = Nanopore_STP27)) +
 ```{r Cumulative Beeswarm, echo=FALSE, out.width="100%",fig.cap="Cumulative methylation of MGMT promoter as analysed by nanopore sequencing agains the known classification of all samples"}
 #Metsum_ROI_long <- read.csv("MGMT_R/R-Markdown/Data/Metsum_ROI_long.csv", header = T, row.names = 1)
 Metsum_ROI_long_ISLAND <- Metsum_ROI_long[c(2:nrow(Metsum_ROI_long)),c(8:105)]
+
+################# Based on Siller et al
 
 
 t <- ifelse(Metsum_ROI_long_ISLAND > 10, 1,0) # If methylation of any given CpG (column), in any given sample (row) is above 10% than 1, else 0
@@ -413,6 +435,35 @@ ggplot(t3, aes(x=Known_status, y=CumMeth, color = Known_status))+
   theme_bw(base_size = 14)+
   facet_grid(~factor(Series, levels = c("Rapid-CNS", "Radium")))
 
+#################### Based on average of all CpGs
+
+x <- Metsum_ROI_long[c(2:129),]
+
+colnames(x) <- c(-7:-1, 1:108)
+
+x$SampleID <- rownames(x)
+
+y2 <- MGMT_RunSum %>% dplyr::select(SampleID,Known_status, Series, Depth)
+
+x2 <- left_join(x, y2) %>% na.omit() 
+
+x3 <- x2  %>% 
+  gather(key = "CpG", value = "percentMeth", -c(Known_status,SampleID,Series,Depth)) %>% 
+  group_by(Series,SampleID,Known_status,Depth) %>% 
+  summarise(Average_Methylation = mean(percentMeth), SD_Methylation = sd(percentMeth))
+
+ggplot(x3, aes(x=Known_status, y=Average_Methylation, color=Known_status))+
+  geom_violin(alpha=0.6)+
+  geom_beeswarm(aes(size = Depth), alpha = 0.6, cex=3)+
+  scale_size_continuous(name="Depth",breaks = c(5,10,50,100), range = c(1,10) )+
+  scale_color_brewer(palette = "Set1", guide="none")+
+  #ylim(0,25)+
+  xlab("Known methylation status")+
+  ylab("Average methylation per nanopore")+
+  #facet_grid(.~Series)+
+  theme_bw(base_size = 14)+
+  facet_grid(~Series)
+
 ```
 
 
@@ -437,7 +488,7 @@ corrplot(cor(Metsum_ROI_long_ISLAND),
 
 #Metsum_ROI_long <- read.csv("MGMT_R/R-Markdown/Data/Metsum_ROI_long.csv", header = T, row.names = 1)
 colnames(Metsum_ROI_long) <- c(-7:-1, 1:98,c("+1","+2", "+3","+4", "+5", "+6", "+7", "+8", "+9", "+10"))
-load("Data/Annotations.Rdata")
+load("MGMT_R/R-markdown/Data/Annotations.Rdata")
 
 library(pheatmap)
 library(grid)
@@ -452,7 +503,7 @@ res <- pheatmap(Metsum_ROI_long_ISLAND_DENREMOVE,
          cluster_rows = T,
          cluster_cols = F,
          clustering_method = "ward.D",
-         cutree_rows = 2,
+         cutree_rows = 3,
          treeheight_row = 20,
          border_color = NA,
          scale = "none",
@@ -475,6 +526,7 @@ res <- pheatmap(Metsum_ROI_long_ISLAND_DENREMOVE,
 ```
 
 ```{r Dotline, echo=FALSE,  out.width="100%" }
+# Dotplot comparing methylation on every CpG site for methylated and unmethylated samples
 
 library(purrr)
 library(rstatix)
@@ -497,6 +549,8 @@ x3 <- x2  %>%
 
 x3$CpG <- as.integer(x3$CpG)
 
+
+
 ggplot(x3, aes(x=CpG, y=Average_Methylation, group =  Known_status))+
   geom_point(aes(color=Known_status), position = position_dodge(width = 0.9), size = 2)+
 #  guides(color = guide_legend(override.aes = list(size=2)))+
@@ -507,6 +561,9 @@ ggplot(x3, aes(x=CpG, y=Average_Methylation, group =  Known_status))+
   theme_bw(base_size = 14)
 
 ### t-test for every CpG
+
+CpGs <- as.factor(x3$CpG)
+
 P_list <- lapply(x2[,CpGs], function(x) t.test(x ~ x2$Known_status, var.equal = FALSE)$p.value)
 P_frame <- as.data.frame(unlist(P_list))
 names(P_frame) <- "p.val"
@@ -522,6 +579,8 @@ ggplot(P_frame, aes(x=CpG, y=adj.p.val))+
   scale_y_log10()+
   geom_hline(yintercept = 0.01)+  
   theme_bw()
+
+
 ```
 
 
@@ -531,7 +590,8 @@ We can also look at methylation patterns specifically in the glioblastoma sample
 
 ```{r HeatmapGBM, echo=FALSE,  out.width="100%", out.height="100%", fig.cap="Heatmap showing unsupervised clustering of glioblastoma samples based on nanopore sequencing of the CpG island in the MGMT promoter"}
 
-GBMs <- MGMT_RunSum %>% dplyr::select(SampleID,Diagnosis) %>% dplyr::filter(Diagnosis == "Glioblastoma") %>% distinct()
+GBMs <- MGMT_RunSum %>% dplyr::select(SampleID,Diagnosis,Series) %>% dplyr::filter(Diagnosis == "Glioblastoma" & Series != "DenStem") %>% distinct()
+
 
 Metsum_ROI_long_GBM <- na.omit(Metsum_ROI_long[GBMs$SampleID,])
 
@@ -539,7 +599,7 @@ Metsum_ROI_long_GBM <- na.omit(Metsum_ROI_long[GBMs$SampleID,])
          cluster_rows = T,
          cluster_cols = F,
          clustering_method = "ward.D",
-         cutree_rows = 2,
+         cutree_rows = 3,
          scale = "none",
          border_color = NA,
          color = rev(brewer.pal(n = 10, name = "Spectral")),
