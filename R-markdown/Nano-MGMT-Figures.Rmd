@@ -313,7 +313,7 @@ ggplot(data =  df, mapping = aes(x = Known_status , y = Nanopore_status)) +
    scale_x_discrete(limits = level_order)+
    scale_y_discrete(limits = level_order)+
   theme_bw(base_size = 18)+
-  theme(legend.position = "none")+
+  theme(legend.position = "none", aspect.ratio = 1)+
   facet_grid(Series~.)
 ```
 
