@@ -446,6 +446,7 @@ ggplot(t3, aes(x=Known_status, y=CumMeth, color = Known_status))+
   geom_beeswarm(aes(size = Depth), alpha = 0.6, cex=3)+
   scale_size_continuous(name="Depth",breaks = c(5,10,50,100), range = c(1,10) )+
   scale_color_brewer(palette = "Set1", guide="none")+
+  geom_hline(yintercept = 15)+
   ylim(0,25)+
   xlab("Known methylation status")+
   ylab("Cumulative methylation per nanopore")+
@@ -456,31 +457,62 @@ ggplot(t3, aes(x=Known_status, y=CumMeth, color = Known_status))+
 
 #################### Based on average of all CpGs
 
-x <- Metsum_ROI_long[c(2:129),]
+# x <- Metsum_ROI_long[c(2:129),]
+# 
+# colnames(x) <- c(-7:-1, 1:108)
+# 
+# x$SampleID <- rownames(x)
+# 
+# y2 <- MGMT_RunSum %>% dplyr::select(SampleID,Known_status, Series, Depth)
+# 
+# x2 <- left_join(x, y2) %>% na.omit() 
+# 
+# x3 <- x2  %>% 
+#   gather(key = "CpG", value = "percentMeth", -c(Known_status,SampleID,Series,Depth)) %>% 
+#   group_by(Series,SampleID,Known_status,Depth) %>% 
+#   summarise(Average_Methylation = mean(percentMeth), SD_Methylation = sd(percentMeth))
+# 
+# x3$Series <- gsub("Radium", "Retrospective nCats", x3$Series)
+# 
+# ggplot(x3, aes(x=Known_status, y=Average_Methylation, color=Known_status))+
+#   geom_violin(alpha=0.6)+
+#   geom_beeswarm(aes(size = Depth), alpha = 0.6, cex=3)+
+#   scale_size_continuous(name="Depth",breaks = c(5,10,50,100), range = c(1,10) )+
+#   scale_color_brewer(palette = "Set1", guide="none")+
+#   #ylim(0,25)+
+#   xlab("Known methylation status")+
+#   ylab("Average methylation per nanopore")+
+#   facet_grid(.~Series)+
+#   theme_bw(base_size = 16)+
+#   theme(aspect.ratio = 2)
 
-colnames(x) <- c(-7:-1, 1:108)
+###################################################
+############# Rapid-CSV regression model predictions
+##################################################
 
-x$SampleID <- rownames(x)
+Predictions <- read.csv2("MGMT_R/Data/Areeba_predictions.csv", header = T)
 
-y2 <- MGMT_RunSum %>% dplyr::select(SampleID,Known_status, Series, Depth)
+Rapid.Predictions <- MGMT_RunSum %>% 
+                      dplyr::select(SampleID,Series, Depth, Known_status) %>% 
+                      dplyr::filter(Series != "DenStem" ) %>% 
+                      distinct() %>%
+                      left_join(Predictions) %>%
+                      na.omit()
 
-x2 <- left_join(x, y2) %>% na.omit() 
+Rapid.Predictions$Model_average <- as.numeric(Rapid.Predictions$Model_average)
+Rapid.Predictions$Prediction_score <- as.numeric(Rapid.Predictions$Prediction_score)
 
-x3 <- x2  %>% 
-  gather(key = "CpG", value = "percentMeth", -c(Known_status,SampleID,Series,Depth)) %>% 
-  group_by(Series,SampleID,Known_status,Depth) %>% 
-  summarise(Average_Methylation = mean(percentMeth), SD_Methylation = sd(percentMeth))
+Rapid.Predictions$Series <- gsub("Radium", "Retrospective nCats", Rapid.Predictions$Series)
 
-x3$Series <- gsub("Radium", "Retrospective nCats", x3$Series)
-
-ggplot(x3, aes(x=Known_status, y=Average_Methylation, color=Known_status))+
+ggplot(Rapid.Predictions, aes(x=Known_status, y=Model_average, color=Known_status))+
   geom_violin(alpha=0.6)+
   geom_beeswarm(aes(size = Depth), alpha = 0.6, cex=3)+
   scale_size_continuous(name="Depth",breaks = c(5,10,50,100), range = c(1,10) )+
   scale_color_brewer(palette = "Set1", guide="none")+
-  #ylim(0,25)+
+    #ylim(0,25)+
   xlab("Known methylation status")+
   ylab("Average methylation per nanopore")+
+  geom_hline(yintercept = 26)+
   facet_grid(.~Series)+
   theme_bw(base_size = 16)+
   theme(aspect.ratio = 2)
@@ -661,14 +693,14 @@ pheatmap(Metsum_ROI_long_GBM,
          cluster_rows = T,
          cluster_cols = F,
          clustering_method = "ward.D",
-         cutree_rows = 3,
+         cutree_rows = 2,
          scale = "none",
          border_color = NA,
          color = rev(brewer.pal(n = 10, name = "Spectral")),
          fontsize = 10,
          fontsize_col = 8,
          fontsize_row = 4,
-          kmeans_k = 4,
+          kmeans_k = 3,
          show_rownames = F,
          treeheight_row = 40,
          legend = T,
@@ -731,24 +763,23 @@ ggsurvplot(
   data = cluster_surv_filt,
   palette = c("darkorange3","cornflowerblue"),
   xlab = "OS, Months",
- # ylab = "Overall survival probability",
+  ylab = "Overall survival probability",
   legend.title = "Pyrosequencing",
   legend.labs = c("Methylated", "Unmethylated"),
   pval = TRUE,
   pval.coord = c(0, 0.1),
   font.x = c(14, "bold", "black"),
   font.y = c(14, "bold", "black"),
- surv.median.line = "hv",
+  surv.median.line = "hv",
   risk.table = TRUE)
 
 # By nanopore clustering
 ggsurvplot(
   fit = fit2_filt,
   data = cluster_surv_filt,
-
   palette = c("cornflowerblue","darkorange3"),
   xlab = "OS, Months",
- # ylab = "Overall survival probability",
+  ylab = "Overall survival probability",
   legend.title = "Nanopore",
   #legend.labs = c("Cluster 1", "Cluster 2", "Cluster 3"),
   legend.labs = c("Cluster 1", "Cluster 2"),
