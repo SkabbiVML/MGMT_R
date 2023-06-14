@@ -39,4 +39,5 @@ DenStem <- MGMT_RunSum %>%
 t.test(Method~Method, data = DenStem, var.equal=TRUE)
 
 
-
+# sequence depth of concordant versus discordant samples
+t.test(Depth~Nano_Pyro_Concordance, data=p, var.equal=T)
