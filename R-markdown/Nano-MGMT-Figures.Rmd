@@ -180,7 +180,8 @@ FOUR_CpGs$Pos <- gsub("CpG4","CpG 79",FOUR_CpGs$Pos)
 
 ggplot(FOUR_CpGs, aes(x=Percent_Meth_Pyro, y=Percent_Meth_Nano, color = Pos))+
   geom_smooth(method = lm, color="black")+
-  stat_regline_equation(label.y = 10, label.x = 60,aes(label = ..rr.label..),color = "black")+
+  stat_regline_equation(label.y = 20, label.x = 60,aes(label = ..rr.label..),color = "black")+
+  stat_cor(method = "pearson",label.y = 10, label.x = 40)+
   geom_point(aes(size=Depth), alpha = 0.6)+
   scale_size_continuous(name="Depth",breaks = c(5,15,25,100,150), range = c(1,10))+
   xlab("Pyro sequencing (% methylated)")+
@@ -205,6 +206,7 @@ ggplot(Compare_CpGs_Radium, aes(x=Pyro_4_CpG_average, y=Nano_4_CpG_average)) +
   geom_smooth(method = "lm", color="black") +
   geom_point(aes(size=Coverage, color=Pyro_Methylation_Status), alpha = 0.7 )+
   stat_regline_equation(label.y = 20, label.x = 60,aes(label = ..rr.label..),color = "black", size=5)+
+  stat_cor(method = "pearson",label.y = 10, label.x = 40)+
   #scale_color_brewer(palette = "Set1", guide="none")+
   scale_color_brewer(name="Known Status", palette = "Set1")+
   scale_size_continuous(name="Depth",breaks = c(5,10,50,100,150), range = c(1,10) )+
