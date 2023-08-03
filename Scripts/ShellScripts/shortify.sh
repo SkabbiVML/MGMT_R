@@ -1,4 +1,0 @@
-multi_to_single_fast5 --input_path /home/vml/MGMT/MGMT_VML/VMLsamples/T21-240/fast5_batch --save_path ~/MGMT/MGMT_VML/VMLsamples/T21-240/fast5_batch/singles --recursive
-nanopolish index -d ~/MGMT/MGMT_VML/VMLsamples/T21-240/fast5_batch/singles ~/MGMT/MGMT_VML/VMLsamples/T21-240/Basecalled.fastq
-nanopolish call-methylation -t 8 -r ~/MGMT/MGMT_VML/VMLsamples/T21-240/Basecalled.fastq --min-separation 9 -b ~/MGMT/MGMT_VML/VMLsamples/T21-240/T21-240.sorted.bam -g ~/MGMT/reference/reference.fasta -w "chr10:131,000,000-132,000,000" > ~/MGMT/MGMT_VML/VMLsamples/T21-240/T21-240-shorty_Methylation.tsv
-~/MGMT/nanopolish/scripts/calculate_methylation_frequency.py ~/MGMT/MGMT_VML/VMLsamples/T21-240/T21-240-shorty_Methylation.tsv --call-threshold 1 > ~/MGMT/MGMT_VML/VMLsamples/T21-240/Summarized_methylation_T21-240-shorty.tsv

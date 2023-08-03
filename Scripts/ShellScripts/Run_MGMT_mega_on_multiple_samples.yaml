@@ -1,1 +1,0 @@
-for dir in /home/vml/MGMT/Analysis/Sequences/VML/*; do MGMT/Scripts/MGMT_mega.sh VML $dir; done
