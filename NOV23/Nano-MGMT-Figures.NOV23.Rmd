@@ -53,7 +53,7 @@ knitr::include_graphics("Figures/MGMT_promoter_region.png")
 ```
 
 
-```{r MGMT_stats, echo=FALSE}
+```{r Load data, echo=FALSE}
 
 library(ggplot2)
 library(dplyr)
@@ -63,8 +63,35 @@ library(kableExtra)
 library(RColorBrewer)
 library(scales)
 
-load("MGMT_R/R-markdown/Data/MGMT_R.Rdata")
+#load("MGMT_R/R-markdown/Data/MGMT_R.Rdata")
 #MGMT_RunSum <- read.csv("MGMT_R/R-markdown/Data/newRunsum.csv", row.names = 1)
+
+# Contains all methylation sites in all samples
+All_MGMT <- read.csv("Documents/GitHub/MGMT_R/NOV23/SAMPLES.cpg.methyl.bed", sep ="\t", header = F)
+# Sample info
+Samples <- read.csv("Documents/GitHub/MGMT_R/NOV23/Samples.csv", sep =",", header = T)
+# Pyrosequencing results for the Radium samples
+Pyro <- read.csv("Documents/GitHub/MGMT_R/NOV23/Pyro_data.csv", header = T)
+
+# select the relevant columns
+All_MGMT <- All_MGMT %>% select(2,10:19) %>% relocate(11)
+
+# name the columns
+names(All_MGMT) <- c("SampleID", "Pos", "Valid_cov", "Methylation_percent", "N_mod", "N_canon", "N_other_mod", "N_delete", "N_fail", "N_diff", "N_nocall")
+
+# Extract the CpGs in the CpG island (98)
+All_MGMT_Island <- All_MGMT %>% filter(between(Pos, 129466683, 129467448))
+
+#or the extended CpG island (115)
+#All_MGMT_ext_Island <- All_MGMT %>% filter(between(Pos, 129466250, 129467831))
+
+# Calculate mean and median coverage 
+cov <- All_MGMT_Island %>% group_by(SampleID) %>% summarise(AVG_cov = mean(Valid_cov), MED_cov = median(Valid_cov))
+```
+
+
+```{r MGMT_stats, echo=FALSE}
+MGMT_RunSum <- inner_join(Samples,cov)
 
 # Summarize and count tumors
 Table <- MGMT_RunSum %>%
@@ -168,12 +195,12 @@ Comparison of individual CpGs as measured by nanopore and pyrosequencing
 ```{r Compare_Individual, echo=FALSE, out.width="100%", fig.cap="Comparison of individual CpGs within exon 1" }
 library(ggpubr)
 
-#FOUR_CpGs <- read.csv("MGMT_R/R-markdown/Data/newFOUR_CPGs.csv", row.names = 1)
+# Extract the CpG sites that correspond to the MGMT Pyro kit sites
+All_MGMT_Pyro <- All_MGMT %>% filter(between(Pos, 129467253, 129467272)) %>% select(1:4)
 
-FOUR_CpGs$Pos <- gsub("CpG1", "CpG 76",FOUR_CpGs$Pos)
-FOUR_CpGs$Pos <- gsub("CpG2","CpG 77",FOUR_CpGs$Pos)
-FOUR_CpGs$Pos <- gsub("CpG3","CpG 78",FOUR_CpGs$Pos)
-FOUR_CpGs$Pos <- gsub("CpG4","CpG 79",FOUR_CpGs$Pos)
+# Add the Pyro kit results to the table
+FOUR_CpGs <- inner_join(Pyro, All_MGMT_Pyro)
+FOUR_CpGs$Pos <- as.factor(FOUR_CpGs$Pos)
 
 FOUR_CpGs <- FOUR_CpGs %>% filter(Valid_cov > 2)
 
@@ -198,16 +225,26 @@ ggplot(FOUR_CpGs, aes(x=Percent_Meth_Pyro, y=Methylation_percent, color = Pos))+
 Group average as measured by nanopore and pyrosequencing
 ```{r Compare_Group, echo=FALSE, out.width="100%", fig.width=10, fig.height=5, fig.cap="Comparison of nanopore sequencing and Pyrosequencing results of 4 CpGs in exon 1 of the MGMT promoter. Plotted values are average methylation of 4 CpGs. Black horizontal and vertical lines mark the 9 percent cut-off value between methylated and unmethylated samples, as determined by pyrosequencing."}
 library(ggpubr)
-#Compare_CpGs_GROUP <- read.csv("MGMT_R/R-markdown/Data/Compare_CpGs_Group.csv", row.names = 1)
 
-Compare_CpGs_Radium <- Compare_CpGs_GROUP %>% filter(DataSet == "Radium")
+FOUR_CpGs_Group <- FOUR_CpGs %>% 
+                      group_by(SampleID) %>% 
+                        summarise(Average_Nano=mean(Methylation_percent), 
+                        Average_Pyro=mean(Percent_Meth_Pyro),
+                        Average_Cov=mean(Valid_cov)) %>%
+                        inner_join(Samples) %>%
+                    filter(Average_Cov>2) 
+                    
 
-ggplot(Compare_CpGs_Radium, aes(x=Pyro_4_CpG_average, y=Nano_4_CpG_average)) +
+ggplot(FOUR_CpGs_Group, aes(x=Average_Pyro, y=Average_Nano)) +
   geom_smooth(method = "lm", color="black") +
-  geom_point(aes(size=Coverage, color=Pyro_Methylation_Status), alpha = 0.7 )+
+  geom_point(aes(
+    size=Average_Cov
+    ,color=Known_status
+    ), 
+    alpha = 0.7 )+
   stat_regline_equation(label.y = 20, label.x = 60,aes(label = ..rr.label..),color = "black", size=5)+
   stat_cor(method = "pearson",label.y = 10, label.x = 40)+
-  #scale_color_brewer(palette = "Set1", guide="none")+
+  scale_color_brewer(palette = "Set1", guide="none")+
   scale_color_brewer(name="Known Status", palette = "Set1")+
   scale_size_continuous(name="Depth",breaks = c(5,10,50,100,150), range = c(1,10) )+
   guides(colour = guide_legend(override.aes = list(size=6)), position = "top")+
@@ -270,29 +307,29 @@ p <- p %>%
 p2 <- p %>% select(SampleID, Series, Nano_Pyro_Concordance)  %>% group_by(Series, Nano_Pyro_Concordance) %>% tally()
 
 # Depth represented as dot size
-ggplot(p, aes(x=Known_status, y=Average_Meth_Nano, color = Known_status))+
+ggplot(FOUR_CpGs_Group, aes(x=Known_status, y=Average_Nano, color = Known_status))+
   geom_hline(yintercept = 10)+
-  geom_beeswarm(aes(size = Depth), alpha = 0.6, cex=3)+
+  geom_beeswarm(aes(size = Average_Cov), alpha = 0.6, cex=3)+
   scale_size_continuous(name="Depth",breaks = c(5,10,50,100), range = c(1,10) )+
   scale_color_brewer(palette = "Set1", guide="none")+
   xlab("Known methylation status")+
   ylab("Nanopore methylation (%)")+
   facet_grid(.~Series)+
   theme_bw()+
-  theme(aspect.ratio = 2.5)+
-  facet_grid(.~Series)
+  theme(aspect.ratio = 1.5)
 
 # Universal dot size
-ggplot(p, aes(x=Known_status, y=Average_Meth_Nano))+
+ggplot(FOUR_CpGs_Group, aes(x=Known_status, y=Average_Nano, color = Known_status))+
   geom_hline(yintercept = 10)+
-  geom_beeswarm(aes(color = Known_status), alpha = 0.8,size = 5, cex=4)+
+  geom_beeswarm(aes(size = Average_Cov), alpha = 0.8,size = 5, cex=4)+
   #scale_size_continuous(guide="none")+
   scale_color_brewer(palette = "Set1", guide="none")+
   xlab("Known methylation status (PSQ)")+
   ylab("Nanopore methylation (%)")+
- # facet_grid(.~Series)+
+  # facet_grid(.~Series)+
   theme_bw(base_size = 16)+
   coord_fixed(0.025)
+
 
 ```
 
@@ -333,26 +370,27 @@ ggplot(data =  df, mapping = aes(x = Known_status , y = Nanopore_status)) +
 #STP27_CpGs <- read.csv("MGMT_R/R-markdown/Data/STP27_All_samples.csv")
 
 
-#STP27_CpGs <- STP27_CpGs %>% filter(Series != "DenStem" & Diagnosis == "Glioblastoma")
-STP27_CpGs <- STP27_CpGs %>% filter(Series == "Rapid-CNS")
-#STP27_CpGs <- STP27_CpGs %>% filter(Diagnosis == "Glioblastoma")
+# Make STP27 table
 
-#fun.1 <- function(x) 100/x
+STP27 <- All_MGMT %>% 
+  filter(Pos == 129466944 | Pos == 129467310) %>% 
+  select(1:2,4) %>% 
+  pivot_wider(names_from = Pos, values_from=Methylation_percent) %>%
+  inner_join(Samples)
 
-ggplot(STP27_CpGs, aes(y=cg12434587, x=cg12981137, color = Known_status)) +
-#  stat_function(fun = fun.1, color = "grey", size = 2) +
-  geom_point(aes(size=Depth), alpha = 0.6)+
-  scale_size_continuous(name="Depth",breaks = c(5,15,30), range = c(1,8))+
+colnames(STP27) <- c("SampleID", "cg12434587", "cg12981137", "Series", "Method", "Known_status", "Diagnosis" )
+
+ggplot(STP27, aes(y=cg12434587, x=cg12981137, color = Known_status)) +
+  #  stat_function(fun = fun.1, color = "grey", size = 2) +
+  geom_point(size = 5, alpha = 0.6)+
+#  scale_size_continuous(name="Depth",breaks = c(5,15,30), range = c(1,8))+
   scale_color_brewer(name="Known Status", palette = "Set1")+
-  scale_x_sqrt(limits = c(0,100),breaks=c(1,10,25,50,75,100))+
-  scale_y_sqrt(limits = c(0,100),breaks=c(1,10,25,50,75,100))+
+  # scale_x_sqrt(limits = c(0,100),breaks=c(1,10,25,50,75,100))+
+  # scale_y_sqrt(limits = c(0,100),breaks=c(1,10,25,50,75,100))+
   guides(colour = guide_legend(override.aes = list(size=5)))+
   theme_bw(base_size = 18)+
-#  facet_wrap(.~Series)+
+ #   facet_wrap(.~Series)+
   theme(aspect.ratio = 1)
-  #facet_wrap(~factor(Series, levels = c("Rapid-CNS", "Radium")))
-  
-
 
 #### Average methylation over STP27 sites
 
