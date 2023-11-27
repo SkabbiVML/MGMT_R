@@ -67,11 +67,11 @@ library(scales)
 #MGMT_RunSum <- read.csv("MGMT_R/R-markdown/Data/newRunsum.csv", row.names = 1)
 
 # Contains all methylation sites in all samples
-All_MGMT <- read.csv("Documents/GitHub/MGMT_R/NOV23/SAMPLES.cpg.methyl.bed", sep ="\t", header = F)
+All_MGMT <- read.csv("GitHub/MGMT_R/NOV23/SAMPLES.cpg.methyl.bed", sep ="\t", header = F)
 # Sample info
-Samples <- read.csv("Documents/GitHub/MGMT_R/NOV23/Samples.csv", sep =",", header = T)
+Samples <- read.csv("GitHub/MGMT_R/NOV23/Samples.csv", sep =",", header = T)
 # Pyrosequencing results for the Radium samples
-Pyro <- read.csv("Documents/GitHub/MGMT_R/NOV23/Pyro_data.csv", header = T)
+Pyro <- read.csv("GitHub/MGMT_R/NOV23/Pyro_data.csv", header = T)
 
 # select the relevant columns
 All_MGMT <- All_MGMT %>% select(2,10:19) %>% relocate(11)
@@ -242,15 +242,15 @@ ggplot(FOUR_CpGs_Group, aes(x=Average_Pyro, y=Average_Nano)) +
     ,color=Known_status
     ), 
     alpha = 0.7 )+
-  stat_regline_equation(label.y = 20, label.x = 60,aes(label = ..rr.label..),color = "black", size=5)+
-  stat_cor(method = "pearson",label.y = 10, label.x = 40)+
+  stat_regline_equation(label.y = 15, label.x = 50,aes(label = ..rr.label..),color = "black", size=5)+
+  stat_cor(method = "pearson",label.y = 10, label.x = 50)+
   scale_color_brewer(palette = "Set1", guide="none")+
   scale_color_brewer(name="Known Status", palette = "Set1")+
   scale_size_continuous(name="Depth",breaks = c(5,10,50,100,150), range = c(1,10) )+
   guides(colour = guide_legend(override.aes = list(size=6)), position = "top")+
   xlab("Pyro sequencing")+
   ylab("Nanopore sequencing")+
-  geom_hline(yintercept = 10)+
+  geom_hline(yintercept = 20)+
   geom_vline(xintercept = 10)+
   theme_bw(base_size = 16)+ 
   coord_fixed()
