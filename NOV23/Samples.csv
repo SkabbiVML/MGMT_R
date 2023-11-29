@@ -23,14 +23,12 @@ SampleID,Series,Method,Known_status,Diagnosis
 1501-1365,Radium,Single,Methylated,Glioblastoma
 1501-1486,Radium,Single,Methylated,Glioblastoma
 1501-1634,Radium,Barcoded,Methylated,Meningioma
-1501-1634,Radium,Barcoded,Methylated,Meningioma
 1501-1667,Radium,Single,Methylated,Metastasis
 1501-1757,Radium,Barcoded,Methylated,Glioblastoma
 1501-1817,Radium,Single,Methylated,Metastasis
 1501-1862,Radium,Single,Methylated,Astrocytoma
 1501-1880,Radium,Single,Methylated,Glioblastoma
 1501-1992,Radium,Single,Methylated,Glioblastoma
-1501-2159,Radium,Barcoded,Methylated,Glioblastoma
 1501-2159,Radium,Single,Methylated,Glioblastoma
 1501-2347,Radium,Single,Methylated,Astrocytoma HG
 1501-2349,Radium,Single,Methylated,Glioblastoma
@@ -141,7 +139,6 @@ T23-174,WGS,WG_Seq,Methylated,Glioblastoma
 1601-0163,Radium,Single,UnMethylated,Metastasis
 1601-0249,Radium,Single,UnMethylated,Meningioma
 1701-2275,Radium,Single,UnMethylated,Glioblastoma
-1701-2296,Radium,Single,UnMethylated,Glioblastoma
 1701-2306,Radium,Single,UnMethylated,Oligodendroglioma
 1701-2312,Radium,Single,UnMethylated,Ganglioglioma
 1701-2345,Radium,Barcoded,UnMethylated,Meningioma
