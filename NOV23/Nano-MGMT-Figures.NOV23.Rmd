@@ -62,6 +62,7 @@ library(janitor)
 library(kableExtra)
 library(RColorBrewer)
 library(scales)
+library(tibble)
 
 #load("MGMT_R/R-markdown/Data/MGMT_R.Rdata")
 #MGMT_RunSum <- read.csv("MGMT_R/R-markdown/Data/newRunsum.csv", row.names = 1)
@@ -131,7 +132,7 @@ ggplot(MGMT_RunSum, aes(y=Diagnosis, fill=Known_status))+
 
 Also simplified version
 
-```{r Methylation_overview_simplified, echo=FALSE, out.width="100%", fig.cap="Distribution of methylated versus unmethylated samples according to known status prior to nanopore sequencing"}
+```{r Methylation_overview_simplified, echo=FALSE, eval= TRUE,out.width="100%", fig.cap="Distribution of methylated versus unmethylated samples according to known status prior to nanopore sequencing"}
 barplot_data <- MGMT_RunSum %>% dplyr::select(c(SampleID, Diagnosis, Known_status)) %>%
   distinct() %>%
   group_by(Diagnosis, Known_status) %>%
@@ -163,8 +164,8 @@ ggplot(barplot_data, aes(x=Diagnosis, y= Samples, fill=Known_status, label = Sam
 ggplot(MGMT_RunSum, aes(x=Method, y=MED_cov))+
   geom_boxplot(aes(fill=Known_status), alpha = 0.2)+
   geom_point(size = 3, position = position_jitterdodge(0.2,0), alpha = 0.7, aes(color=Known_status))+
-  scale_color_brewer(name="Known Status", palette = "Set1")+
-  scale_fill_brewer(name="Known Status", palette="Set1")+
+  scale_color_brewer(name="Known status", palette = "Set1")+
+  scale_fill_brewer(name="Known status", palette="Set1")+
   scale_x_discrete(labels = c("Adaptive\nSampling", "Barcoded\nnCATs", "Single\nnCATs","WGSeq"))+
   scale_y_continuous(trans = 'log10', breaks = c(1,10,100,1000), limits = c(0.9,1000))+
   xlab ("")+
@@ -208,7 +209,7 @@ FOUR_CpGs <- FOUR_CpGs %>% filter(Valid_cov > 2)
 ggplot(FOUR_CpGs, aes(x=Percent_Meth_Pyro, y=Methylation_percent, color = Pos))+
   geom_smooth(method = lm, color="black")+
   stat_regline_equation(label.y = 20, label.x = 60,aes(label = ..rr.label..),color = "black")+
-  stat_cor(method = "pearson",label.y = 10, label.x = 40, color = "black")+
+ # stat_cor(method = "pearson",label.y = 10, label.x = 40, color = "black")+
   geom_point(aes(size=Valid_cov), alpha = 0.6)+
   scale_size_continuous(name="Coverage",breaks = c(5,15,25,100,150), range = c(1,10))+
   xlab("Pyro sequencing (% methylated)")+
@@ -243,7 +244,7 @@ ggplot(FOUR_CpGs_Group, aes(x=Average_Pyro, y=Average_Nano)) +
     ), 
     alpha = 0.7 )+
   stat_regline_equation(label.y = 15, label.x = 50,aes(label = ..rr.label..),color = "black", size=5)+
-  stat_cor(method = "pearson",label.y = 10, label.x = 50)+
+ # stat_cor(method = "pearson",label.y = 10, label.x = 50)+
   scale_color_brewer(palette = "Set1", guide="none", name="Known Status")+
   scale_size_continuous(name="Coverage",breaks = c(5,10,50,100,150), range = c(1,10) )+
   guides(colour = guide_legend(override.aes = list(size=6)), position = "top")+
@@ -270,13 +271,13 @@ library(ggbeeswarm)
 
 FOUR_CpGs_Group <- na.omit(FOUR_CpGs_Group)
 
-p <- left_join(MGMT_RunSum,FOUR_CpGs_Group)
-
-p <- FOUR_CpGs_Group %>% select(SampleID,Average_Cov, Known_status,Average_Nano)
-p$Nano_Methylation_Status <- if_else(p$Average_Nano > 20, "Methylated", "Unmethylated")
-p$Nano_Pyro_Concordance <- if_else(p$Known_status == p$Nano_Methylation_Status, "Concordant", "Discordant")
-
-p %>% select(SampleID, Nano_Pyro_Concordance)  %>% group_by(Nano_Pyro_Concordance) %>% tally()
+# p <- left_join(MGMT_RunSum,FOUR_CpGs_Group)
+# 
+# p <- FOUR_CpGs_Group %>% select(SampleID,Average_Cov, Known_status,Average_Nano)
+# p$Nano_Methylation_Status <- if_else(p$Average_Nano > 20, "Methylated", "Unmethylated")
+# p$Nano_Pyro_Concordance <- if_else(p$Known_status == p$Nano_Methylation_Status, "Concordant", "Discordant")
+# 
+# p %>% select(SampleID, Nano_Pyro_Concordance)  %>% group_by(Nano_Pyro_Concordance) %>% tally()
 
 # Depth represented as dot size
 ggplot(FOUR_CpGs_Group, aes(x=Known_status, y=Average_Nano, color = Known_status))+
@@ -449,34 +450,34 @@ ggplot(STP_plot, aes(x=Known_status, y=STPMean, color = Known_status))+
   theme(aspect.ratio = 1.5)+
   facet_grid(~factor(Series, levels = c("Rapid-CNS", "Radium")))
 
-# STP27 confusion matrix
-
-Series <- factor(c("Radium","Radium","Radium","Radium","Rapid-CNS","Rapid-CNS","Rapid-CNS","Rapid-CNS"))
-Nanopore_STP27 <- factor(c("Unmethylated", "Unmethylated","Methylated", "Methylated","Unmethylated", "Unmethylated","Methylated", "Methylated"))
-Known_status <- factor(c("Unmethylated", "Methylated",  "Unmethylated","Methylated","Unmethylated", "Methylated",  "Unmethylated","Methylated"))
-Y      <- c(35, 8, 1, 24,44,1,2,20)
-df <- data.frame(Series,Nanopore_STP27, Known_status, Y)
-
-level_order <- c("Unmethylated",  "Methylated")
-
-#df$Series <- factor(df$Series, levels = c("Rapid-CNS","Radium"))
-
-df <- df %>% filter(Series == "Rapid-CNS")
-
-library(ggplot2)
-ggplot(data =  df, mapping = aes(x = Known_status , y = Nanopore_STP27)) +
-  geom_tile(aes(fill = Y), colour = "white") +
-  geom_text(aes(label = sprintf("%1.0f", Y)), vjust = 0.5, size = 18) +
- scale_fill_gradient2(low = "red",
-                       mid = "white",
-                       high = "grey",
-                       midpoint = 10)+
-  ylab("Nanopore seq")+
-  xlab("MGMT STP27")+
-   scale_x_discrete(limits = level_order)+
-   scale_y_discrete(limits = level_order)+
-  theme_bw(base_size = 28)+
-  theme(legend.position = "none", aspect.ratio = 1)
+# # STP27 confusion matrix
+# 
+# Series <- factor(c("Radium","Radium","Radium","Radium","Rapid-CNS","Rapid-CNS","Rapid-CNS","Rapid-CNS"))
+# Nanopore_STP27 <- factor(c("Unmethylated", "Unmethylated","Methylated", "Methylated","Unmethylated", "Unmethylated","Methylated", "Methylated"))
+# Known_status <- factor(c("Unmethylated", "Methylated",  "Unmethylated","Methylated","Unmethylated", "Methylated",  "Unmethylated","Methylated"))
+# Y      <- c(35, 8, 1, 24,44,1,2,20)
+# df <- data.frame(Series,Nanopore_STP27, Known_status, Y)
+# 
+# level_order <- c("Unmethylated",  "Methylated")
+# 
+# #df$Series <- factor(df$Series, levels = c("Rapid-CNS","Radium"))
+# 
+# df <- df %>% filter(Series == "Rapid-CNS")
+# 
+# library(ggplot2)
+# ggplot(data =  df, mapping = aes(x = Known_status , y = Nanopore_STP27)) +
+#   geom_tile(aes(fill = Y), colour = "white") +
+#   geom_text(aes(label = sprintf("%1.0f", Y)), vjust = 0.5, size = 18) +
+#  scale_fill_gradient2(low = "red",
+#                        mid = "white",
+#                        high = "grey",
+#                        midpoint = 10)+
+#   ylab("Nanopore seq")+
+#   xlab("MGMT STP27")+
+#    scale_x_discrete(limits = level_order)+
+#    scale_y_discrete(limits = level_order)+
+#   theme_bw(base_size = 28)+
+#   theme(legend.position = "none", aspect.ratio = 1)
 #+ facet_grid(.~Series)
 
 ```
@@ -484,9 +485,12 @@ ggplot(data =  df, mapping = aes(x = Known_status , y = Nanopore_STP27)) +
 
 ```{r Cumulative Beeswarm, echo=FALSE, out.width="100%",fig.cap="Cumulative methylation of MGMT promoter as analysed by nanopore sequencing agains the known classification of all samples"}
 #Metsum_ROI_long <- read.csv("MGMT_R/R-Markdown/Data/Metsum_ROI_long.csv", header = T, row.names = 1)
-All_MGMT_ext_Island <- All_MGMT %>% filter(between(Pos, 129466250, 129467831))
+#Metsum_ROI_long <- read.csv("MGMT_R/R-Markdown/Data/Metsum_ROI_long.csv", header = T, row.names = 1)
 
-MGMT_long_ext_island <- All_MGMT_ext_Island %>% 
+
+All_MGMT_island <- All_MGMT %>% filter(between(Pos, 129466683, 129467448))
+
+MGMT_long_ext_island <- All_MGMT_island %>% 
   select(c("SampleID", "Pos", "Methylation_percent")) %>%
   pivot_wider(names_from = Pos, values_from=Methylation_percent) %>%
   column_to_rownames("SampleID")
@@ -518,6 +522,8 @@ t3$Method <- NULL
 t3$Series <- gsub("Radium", "Retrospective nCats", t3$Series)
 
 t3 <- na.omit(t3)
+
+t3 <- t3 %>% filter(Series != "DenStem" & Series != "WGS")
 
 # Beeswarm based on cumulative methylation
 
@@ -606,9 +612,9 @@ ggplot(Rapid.Predictions, aes(x=Known_status, y=Model_average, color=Known_statu
 ```{r Corrolation_plot, echo=FALSE, eval=FALSE}
 library(corrplot)
 # Extract the CpGs in the CpG island (98)
-All_MGMT_Island <- All_MGMT %>% filter(between(Pos, 129466683, 129467448))
+All_MGMT_island <- All_MGMT %>% filter(between(Pos, 129466683, 129467448))
 
-MGMT_long_island <- All_MGMT_Island %>% 
+MGMT_long_island <- All_MGMT_island %>% 
   select(c("SampleID", "Pos", "Methylation_percent")) %>%
   pivot_wider(names_from = Pos, values_from=Methylation_percent) %>%
   column_to_rownames("SampleID")
@@ -626,8 +632,6 @@ corrplot(cor(MGMT_long_island),
 ```
 
 ```{r Heatmap, echo=FALSE,  out.width="100%", out.height="100%", fig.cap="Clustered heatmap of all samples based on nanopore sequencing of CpG island of the MGMT promoter"}
-
-#Metsum_ROI_long <- read.csv("MGMT_R/R-Markdown/Data/Metsum_ROI_long.csv", header = T, row.names = 1)
 
 # Extract the CpGs in the CpG island (98)
 All_MGMT_Island <- All_MGMT %>% filter(between(Pos, 129466683, 129467448))
@@ -661,7 +665,7 @@ row_anno$Diagnosis <- ifelse(
 
 colnames(row_anno) <- c("Known status", "Diagnosis")
 
-ann_colors <- list("Known status"=c("UnMethylated"="#377EB8", 
+ann_colors <- list("Known status"=c("Unmethylated"="#377EB8", 
                                     "Methylated"="#E41A1C"), 
                    "Diagnosis"=c("Glioblastoma"="#31688EFF", 
                                  "IDHglioma"="#440154FF", 
@@ -688,7 +692,7 @@ pheatmap(MGMT_long_island,
                  legend = T,
                  show_rownames = F,
                  legend_breaks = seq(0,100,10),
-            #     annotation_col = col_anno,
+               #  annotation_col = col_anno,
                  annotation_row = row_anno,
                  annotation_colors = ann_colors,
      #            # main = "All samples,  (n=148)",
@@ -705,15 +709,17 @@ library(purrr)
 library(rstatix)
 library(stringr)
 
-x <- MGMT_long_island
+########################### Plot mean methylation per cpg and standard deviation
 
-x$SampleID <- rownames(x)
+x <- All_MGMT_Island %>% 
+     select(c("SampleID", "Pos", "Methylation_percent")) %>%
+      pivot_wider(names_from = Pos, values_from=Methylation_percent) 
 
 y2 <- MGMT_RunSum %>% dplyr::select(SampleID,Known_status)
 
 x2 <- left_join(x, y2) %>% 
-      filter(!str_detect(SampleID, "^T")) %>% # Can filter out DenStem and WGS samples as they are different biopsies analysed for pyro and nano
-               na.omit() 
+     filter(!str_detect(SampleID, "^T")) %>% # Can filter out DenStem and WGS samples as they are different biopsies analysed for pyro and nano
+  na.omit() 
 
 x3 <- x2  %>% 
   gather(key = "CpG", value = "percentMeth", -c(Known_status,SampleID)) %>% 
@@ -721,21 +727,23 @@ x3 <- x2  %>%
   summarise(Average_Methylation = mean(percentMeth), SD_Methylation = sd(percentMeth))
 
 
-x3$CpG <- as.integer(x3$CpG)
+x3$CpG_row <- as.integer(rep(c(1:98),2))
 
 
 
-ggplot(x3, aes(x=CpG, y=Average_Methylation, group =  Known_status))+
+ggplot(x3, aes(x=CpG_row, y=Average_Methylation, group =  Known_status))+
   geom_point(aes(color=Known_status), position = position_dodge(width = 0.9), size = 2)+
   geom_linerange(aes(ymin=Average_Methylation-SD_Methylation, ymax=Average_Methylation+SD_Methylation,color=Known_status),position = position_dodge(width = 0.9))+
-  scale_color_brewer(palette = "Set1")+
+  scale_color_brewer(palette = "Set1", name = "Known status")+
   ylab("Average methylation (%)")+
+  xlab("CpG in MGMT promoter island")+
   geom_line(aes(color=Known_status))+
   scale_x_continuous(breaks = c(1,10,20,30,40,50,60,70,80,90,98))+
   #geom_smooth(aes(color=Known_status), show.legend = FALSE)+
   theme_bw(base_size = 14)+
-  theme(legend.position="top")
+  theme(legend.position="top", aspect.ratio = 0.15)
 
+######################################################
 ### t-test for every CpG
 
 CpGs <- as.factor(x3$CpG)
@@ -746,29 +754,33 @@ names(P_frame) <- "p.val"
 
 P_frame$adj.p.val <- p.adjust(P_frame$p.val, method = "bonferroni", n = length(P_frame$p.val))
 
-P_frame <- P_frame[1:115,]
+P_frame <- P_frame[1:98,]
 
 
-P_frame$CpG <- as.integer(rownames(P_frame))
+P_frame$CpG <- as.integer(1:98)
 
-regions <- tibble(x1 = 75.5, x2 = 79.5, y1 = 1e-25, y2 = 5)
+regions <- tibble(x1 = 75.5, x2 = 79.5, y1 = 1e-25, y2 = 5, y3 =0.00001, x3 = 31, y4 = 0.000000001, x4 = 84)
+
 
 ggplot(P_frame, aes(x=CpG, y=adj.p.val))+
   geom_point(size = 2)+
-  geom_rect(data = regions,
+  geom_rect(data = regions,   # make a transparent box around the MGMT Pyro sites
             inherit.aes = FALSE,
             mapping = aes(xmin = x1, xmax = x2,
                           ymin = y1, ymax = y2),
             color = "transparent",
             fill = "black",
             alpha = .2)+
+  geom_text(data = regions, mapping = aes(y=y3,x=x3), label = "*", size = 10)+ # mark the two STP27 sites
+  geom_text(data = regions, mapping = aes(y=y4,x=x4), label = "*", size = 10)+
   geom_line()+
   ylab('Adjusted p-value')+
+  xlab("CpG in MGMT promoter island")+
   scale_y_continuous(trans = 'log10')+
-  scale_x_continuous(breaks = c(-7,1,10,20,30,40,50,60,70,80,90,98,108))+
+  scale_x_continuous(breaks = c(1,10,20,30,40,50,60,70,80,90,98))+
   geom_hline(yintercept = 0.01)+  
-  theme_bw(base_size = 14)
-
+  theme_bw(base_size = 14)+
+  theme(aspect.ratio = 0.15)
 
 ```
 
@@ -869,10 +881,11 @@ cluster_surv <- inner_join(MGMT_clusters, Patient_meta, by="SampleID") # add clu
 
 cluster_surv$months_to_event <- as.numeric(cluster_surv$months_to_event)
 
-cluster_surv_filt <- cluster_surv %>% filter(Diagnosis == "GBM" & 
-                                               Reopr == 0 & 
-                                               Onc.treatment == "Stupp" & 
-                                               Age < 76) # filter to only include primary GBMs that received full treatment
+cluster_surv_filt <- cluster_surv %>% filter(Diagnosis == "GBM" & # only include GBM patients
+                                               Age < 76 & # Remove the patients over 75 years of age
+                                               Reopr == 0 & # Only include primary cases
+                                               Onc.treatment == "Stupp") # Only include patients that recieve full treatment
+                                               
 
 
 ####################### Survival
