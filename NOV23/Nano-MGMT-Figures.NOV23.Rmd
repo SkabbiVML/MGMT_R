@@ -41,14 +41,14 @@ knitr::opts_chunk$set(dpi = 100,
                       echo=TRUE,
                       warning=FALSE, message=FALSE, eval = TRUE,
                       fig.show=TRUE, fig.width= 5,fig.height= 5,fig.align='center',
-                      out.width = '50%', fig.path= 'AutoFigures/')
+                      out.width = '100%')
 ```
 
 ## Figures
 
 ### MGMT Promoter CpG island and methods of evaluation
-```{r Promoter, echo=FALSE, out.width="100%", fig.cap="Organization of the MGMT promoter. MSP refers to the typical primer sites of methylation specific PCR to determine MGMT promoter methylation. Asterixes represent the 4 CpGs analysed by the Qiagen MGMT pyrosequencing kit."}
-setwd("~/Documents/")
+```{r Promoter, echo=FALSE, eval=FALSE, out.width="100%", fig.cap="Organization of the MGMT promoter. MSP refers to the typical primer sites of methylation specific PCR to determine MGMT promoter methylation. Asterixes represent the 4 CpGs analysed by the Qiagen MGMT pyrosequencing kit."}
+setwd("/home/vml/Documents")
 knitr::include_graphics("GitHub/MGMT_R/R-markdown/Figures/MGMT_promoter_region.png")
 ```
 
@@ -59,11 +59,12 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(janitor)
-library(kableExtra)
+#library(kableExtra)
 library(RColorBrewer)
 library(scales)
 library(tibble)
 
+setwd("/home/vml/Documents")
 #load("MGMT_R/R-markdown/Data/MGMT_R.Rdata")
 #MGMT_RunSum <- read.csv("MGMT_R/R-markdown/Data/newRunsum.csv", row.names = 1)
 
@@ -178,7 +179,7 @@ ggplot(MGMT_RunSum, aes(x=Method, y=MED_cov))+
 ggplot(MGMT_RunSum, aes(x=Series, y=MED_cov))+
   geom_boxplot(aes(color=Method), alpha=0.1) +
   geom_point(size = 2, position = position_jitterdodge(0.2,0), alpha = 0.6, aes(color=Method)) +
-  #stat_summary(fun=median, geom="point", shape="-", size=12, color="black",alpha = 0.8,position = position_dodge(0.8), aes(fill=Method))+
+  stat_summary(fun=median, geom="point", shape="-", size=12, color="black",alpha = 0.8,position = position_dodge(0.8), aes(fill=Method))+
   scale_color_viridis_d(name="Method")+
   scale_fill_discrete(guide="none")+
   labs(fill = "", color = "Method")+
@@ -209,7 +210,7 @@ FOUR_CpGs <- FOUR_CpGs %>% filter(Valid_cov > 2)
 ggplot(FOUR_CpGs, aes(x=Percent_Meth_Pyro, y=Methylation_percent, color = Pos))+
   geom_smooth(method = lm, color="black")+
   stat_regline_equation(label.y = 20, label.x = 60,aes(label = ..rr.label..),color = "black")+
- # stat_cor(method = "pearson",label.y = 10, label.x = 40, color = "black")+
+  stat_cor(method = "pearson",label.y = 10, label.x = 40, color = "black")+
   geom_point(aes(size=Valid_cov), alpha = 0.6)+
   scale_size_continuous(name="Coverage",breaks = c(5,15,25,100,150), range = c(1,10))+
   xlab("Pyro sequencing (% methylated)")+
@@ -244,7 +245,7 @@ ggplot(FOUR_CpGs_Group, aes(x=Average_Pyro, y=Average_Nano)) +
     ), 
     alpha = 0.7 )+
   stat_regline_equation(label.y = 15, label.x = 50,aes(label = ..rr.label..),color = "black", size=5)+
- # stat_cor(method = "pearson",label.y = 10, label.x = 50)+
+  stat_cor(method = "pearson",label.y = 10, label.x = 50)+
   scale_color_brewer(palette = "Set1", guide="none", name="Known Status")+
   scale_size_continuous(name="Coverage",breaks = c(5,10,50,100,150), range = c(1,10) )+
   guides(colour = guide_legend(override.aes = list(size=6)), position = "top")+
@@ -317,6 +318,8 @@ test <- test[order(test$Average_Nano),]
 
 model <- glm(P ~ Average_Nano, family = "binomial", data = Train)
 
+summary(model)
+
 #predict the other samples
 predicted <- predict(model, test, type = "response")
 
@@ -367,7 +370,7 @@ ggroc(rocs, size=1.5, alpha = 0.7)+
         legend.margin = margin(6, 6, 6, 6))
 ```
 
-```{r Concordance, echo=FALSE}
+```{r Concordance, echo=FALSE, eval=FALSE}
 knitr::kable(p2)
 ```
 
@@ -417,13 +420,16 @@ colnames(STP27) <- c("SampleID", "cg12434587", "cg12981137", "Series", "Method",
 ggplot(STP27, aes(y=cg12434587, x=cg12981137, color = Known_status)) +
   #  stat_function(fun = fun.1, color = "grey", size = 2) +
   geom_point(size = 5, alpha = 0.6)+
-#  scale_size_continuous(name="Depth",breaks = c(5,15,30), range = c(1,8))+
+  stat_ellipse(aes(fill = Known_status), level = 0.90, geom = "polygon", alpha = 0.1)+
+  scale_fill_discrete(guide = "none")+
+  stat_ellipse(level = 0.50, na.rm=T, linetype = 2)+
+  #  scale_size_continuous(name="Depth",breaks = c(5,15,30), range = c(1,8))+
   scale_color_brewer(name="Known Status", palette = "Set1")+
-   scale_x_sqrt(limits = c(0,100),breaks=c(1,10,25,50,75,100))+
-   scale_y_sqrt(limits = c(0,100),breaks=c(1,10,25,50,75,100))+
+  # scale_x_continuous(limits = c(0,100),breaks=c(1,10,25,50,75,100))+
+  # scale_y_continuous(limits = c(0,100),breaks=c(1,10,25,50,75,100))+
   guides(colour = guide_legend(override.aes = list(size=5)))+
-  theme_bw(base_size = 18)+
-  #  facet_wrap(.~Series)+
+  theme_bw(base_size = 10)+
+ # facet_wrap(.~Series)+
   theme(aspect.ratio = 1)
 
 #### Average methylation over STP27 sites
@@ -575,7 +581,7 @@ ggplot(t3, aes(x=Known_status, y=CumMeth, color = Known_status))+
 ###################################################
 ############# Rapid-CSV regression model predictions
 ##################################################
-
+setwd("/home/vml/Documents")
 Predictions <- read.csv2("GitHub/MGMT_R/Data/Areeba_predictions.csv", header = T)
 
 Rapid.Predictions <- MGMT_RunSum %>% 
@@ -609,7 +615,7 @@ ggplot(Rapid.Predictions, aes(x=Known_status, y=Model_average, color=Known_statu
 
 ## Unsupervised clustering of nanopore results
 
-```{r Corrolation_plot, echo=FALSE, eval=FALSE}
+```{r Corrolation_plot, echo=FALSE, eval=TRUE}
 library(corrplot)
 # Extract the CpGs in the CpG island (98)
 All_MGMT_island <- All_MGMT %>% filter(between(Pos, 129466683, 129467448))
@@ -643,6 +649,7 @@ MGMT_long_island <- All_MGMT_Island %>%
 
 colnames(MGMT_long_island ) <- c(1:98)
 
+setwd("/home/vml/Documents")
 load("GitHub/MGMT_R/R-markdown/Data/Annotations.Rdata")
 
 library(stringi)
@@ -688,7 +695,7 @@ pheatmap(MGMT_long_island,
                  color = rev(brewer.pal(n = 10, name = "Spectral")),
                  fontsize_col = 8,
                  fontsize_row = 4,
-                 fontsize = 14,
+                 fontsize = 8,
                  legend = T,
                  show_rownames = F,
                  legend_breaks = seq(0,100,10),
@@ -740,7 +747,7 @@ ggplot(x3, aes(x=CpG_row, y=Average_Methylation, group =  Known_status))+
   geom_line(aes(color=Known_status))+
   scale_x_continuous(breaks = c(1,10,20,30,40,50,60,70,80,90,98))+
   #geom_smooth(aes(color=Known_status), show.legend = FALSE)+
-  theme_bw(base_size = 14)+
+  theme_bw(base_size = 8)+
   theme(legend.position="top", aspect.ratio = 0.15)
 
 ######################################################
@@ -779,7 +786,7 @@ ggplot(P_frame, aes(x=CpG, y=adj.p.val))+
   scale_y_continuous(trans = 'log10')+
   scale_x_continuous(breaks = c(1,10,20,30,40,50,60,70,80,90,98))+
   geom_hline(yintercept = 0.01)+  
-  theme_bw(base_size = 14)+
+  theme_bw(base_size = 8)+
   theme(aspect.ratio = 0.15)
 
 ```
@@ -814,7 +821,7 @@ row_anno_GBM <- row_anno[1]
          color = rev(brewer.pal(n = 10, name = "Spectral")),
          fontsize_col = 8,
          fontsize_row = 4,
-         fontsize = 14,
+         fontsize = 8,
          legend = T,
          show_rownames = F,
          legend_breaks = seq(0,100,10),
@@ -862,6 +869,7 @@ pheatmap(na.omit(MGMT_long_island_GBM),
 
 {NEEDS UPDATE}Patient survival data is currently only available for 43 patients, including 37 GBM patients. Of these, 26 are primary GBMs. Comparison of survival of these 26 patients can be seen in figure 10. There is little difference between the results if patients are classified by pyrosequencing or nanopore sequencing, only two patients switch groups. We are expecting more data to strengthen these results. But they are promising: classification by nanopore sequencing is as good or better than pyrosequencing.
 ```{r KaplanMeier, echo=FALSE,  out.width="100%", out.height="100%", fig.cap="Kaplan-Meier Overall Survival curves"}
+setwd("/home/vml/Documents")
 Patient_meta <- read.csv("GitHub/MGMT_R/Data/Patient_Survival.csv")
 
 res <- pheatmap(MGMT_long_island_GBM,
