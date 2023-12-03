@@ -1,4 +1,4 @@
-Sample_ID,Age,Sex,Diagnosis,IDH,Resection,Onc treatment,Reopr,months_to_event,Status,censor,Pyro_state
+SampleID,Age,Sex,Diagnosis,IDH,Resection,Onc treatment,Reopr,months_to_event,Status,censor,Pyro_state
 1701-2595,65,F,GBM,Neg,STR,Stupp,1,150,Dead,TRUE,UnMethylated
 1501-1486,60,M,GBM,Neg,GTR,Stupp,0,29.26,Dead,TRUE,Methylated
 1501-1757,65,M,GBM,Neg,STR,Stupp,0,29.69,Dead,TRUE,Methylated
