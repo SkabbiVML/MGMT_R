@@ -52,7 +52,6 @@ ROC.Predict <- roc(test$P,
                    print.auc = T)
 
 
-
 ##### MAKE ROC curves
 
 #ggroc(ROC.Train) # training set
@@ -70,15 +69,6 @@ Stp27.train$P <- ifelse(Stp27.train$Known_status=="Methylated",1,0)
 Stp27.train <- Stp27.train[order(Stp27.train$P),]
 
 stp.model <- glm(P ~ cg12434587 + cg12981137, family = "binomial", data = Stp27.train)
-
-ggplot(Stp27.train, aes(x=stp.model$weights, y=P))+
-  geom_line(aes(x=stp.model$weights, y=stp.model$fitted.values))+
-  geom_point(aes(color=Known_status),size=3, alpha=0.7)+
-  geom_vline(xintercept = 21.8)+
-  scale_color_brewer(name="Known Status", palette = "Set1")+
-  ylab("")+
-  xlab("Nanopore sequencing\n(% methylated)")+
-  theme_bw(base_size = 16)
 
 
 
@@ -127,3 +117,4 @@ ggroc(rocs, size=1.5, alpha = 0.7)+
   theme(legend.position = c(.95, .65),
         legend.justification = c("right", "top"),
         legend.margin = margin(6, 6, 6, 6))
+

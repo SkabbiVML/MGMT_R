@@ -59,7 +59,7 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(janitor)
-library(kableExtra)
+#library(kableExtra)
 library(RColorBrewer)
 library(scales)
 library(tibble)
@@ -148,6 +148,7 @@ barplot_data <- MGMT_RunSum %>% dplyr::select(c(SampleID, Diagnosis, Known_statu
 
 barplot_data$Diagnosis <- factor(barplot_data$Diagnosis, levels = c("Glioblastoma", 'IDH glioma', "Other"))
 
+
 ggplot(barplot_data, aes(x=Diagnosis, y= Samples, fill=Known_status, label = Samples))+
   geom_bar(stat = "identity")+
   coord_flip()+
@@ -178,6 +179,7 @@ ggplot(MGMT_RunSum, aes(x=Method, y=MED_cov))+
   ylab("Median methylation coverage") +
   theme_bw(base_size = 12)+
   theme(legend.position = "top", aspect.ratio = 0.3 )
+
 ```
 
 ```{r Coverage_Dataset, echo=FALSE, eval=FALSE, fig.cap="Sequencing depth of methods, group median represented by red diamond. Single sample runs generally have higher sequence depth than barcoded samples or adaptive sampling."}
@@ -900,7 +902,7 @@ cluster_surv <- inner_join(MGMT_clusters, Patient_meta, by="SampleID") # add clu
 cluster_surv$months_to_event <- as.numeric(cluster_surv$months_to_event)
 
 cluster_surv_filt <- cluster_surv %>% filter(Diagnosis == "GBM" & # only include GBM patients
-#                                               Age < 76 & # Remove the patients over 75 years of age
+                                               Age < 76 & # Remove the patients over 75 years of age
                                                Reopr == 0 & # Only include primary cases
                                                Onc.treatment == "Stupp") # Only include patients that recieve full treatment
                                                
