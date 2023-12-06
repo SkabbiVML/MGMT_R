@@ -68,7 +68,7 @@ Stp27.train <- STP27 %>% filter(Series == "Rapid-CNS") %>% select(2,3,6)
 Stp27.train$P <- ifelse(Stp27.train$Known_status=="Methylated",1,0)
 Stp27.train <- Stp27.train[order(Stp27.train$P),]
 
-stp.model <- glm(P ~ cg12434587 + cg12981137, family = "binomial", data = Stp27.train)
+stp.model <- glm(P ~ CpG_31 + CpG_84, family = "binomial", data = Stp27.train)
 
 
 
@@ -100,20 +100,21 @@ stp.ROC.Predict <- roc(Stp27.test$P,
 auc(stp.ROC.Train)
 auc(stp.ROC.Predict)
 
-rocs <- list()
+rocs.STP <- list()
 
-rocs[["Pyro_training"]] <- ROC.Train
-rocs[["Pyro_Predict"]] <- ROC.Predict
-rocs[["STP27_training"]] <- stp.ROC.Train
-rocs[["STP_Predict"]] <- stp.ROC.Predict
+rocs.STP[["Rapid-CNS"]] <- stp.ROC.Train
+rocs.STP[["Other"]] <- stp.ROC.Predict
 
-ggroc(rocs, size=1.5, alpha = 0.7)+
-  scale_color_brewer(palette = "Dark2", name = "",
-                     labels=c("Pyro training\nAUC = 99.15%",
-                              "\nPyro predict\nAUC = 95.08",
-                              "\nSTP27 training\nAUC = 92.9",
-                              "\nSTP predict\nAUC = 93.3"))+
-  theme_bw(base_size = 12)+
+ggroc(rocs.STP, aes = c("colour","linetype"),size=1.5, alpha = 0.7)+
+  scale_color_manual("",
+                     values = c("black", "darkgrey"),
+                     labels=c("Rapid-CNS\nAUC = 92.9 %",
+                              "\nOther\nAUC = 93.3 %"))+
+  scale_linetype_manual("", 
+                        values=c("solid","dashed"), 
+                        labels=c("Rapid-CNS\nAUC = 92.9 %",
+                                 "\nOther\nAUC = 93.3 %"))+
+  theme_bw(base_size = 16)+
   theme(legend.position = c(.95, .65),
         legend.justification = c("right", "top"),
         legend.margin = margin(6, 6, 6, 6))
