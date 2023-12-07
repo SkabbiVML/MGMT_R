@@ -423,9 +423,10 @@ STP27 <- All_MGMT %>%
   filter(Pos == 129466944 | Pos == 129467310) %>% 
   select(1:2,4) %>% 
   pivot_wider(names_from = Pos, values_from=Methylation_percent) %>%
-  inner_join(Samples)
+  inner_join(MGMT_RunSum) %>%
+  filter(AVG_cov>2)
 
-colnames(STP27) <- c("SampleID", "CpG_31", "CpG_84", "Series", "Method", "Known_status", "Diagnosis" )
+colnames(STP27) <- c("SampleID", "CpG_31", "CpG_84", "Series", "Method", "Known_status", "Diagnosis","AVG_cov","MED_cov" )
 
 STP27$Series <- ifelse(STP27$Series == "Rapid-CNS", "Rapid-CNS", "Other")
 
