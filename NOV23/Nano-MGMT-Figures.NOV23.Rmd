@@ -276,31 +276,34 @@ Use 4 CpG sites (methylation cutoff 10%) to classify all samples, compared to kn
 
 library(ggbeeswarm)
 
-#FOUR_CpGs <- read.csv("MGMT_R/R-Markdown/Data/newFOUR_CPGs.csv")
+# Add the Pyro kit results to the table
+FOUR_CpGs_Beeswarm <- All_MGMT %>% filter(between(Pos, 129467253, 129467272)) %>% select(1:4)
 
+FOUR_CpGs_Beeswarm <- All_MGMT %>% filter(between(Pos, 129467253, 129467272)) %>% 
+  select(1:4) %>%
+  group_by(SampleID) %>% 
+  summarise(Average_Nano=mean(Methylation_percent), 
+            Average_Cov=mean(Valid_cov)) %>%
+  left_join(Samples) %>%
+  filter(Average_Cov>2) 
 
+FOUR_CpGs_Beeswarm$Series <-  ifelse(FOUR_CpGs_Beeswarm$Series == "Radium", "Retrospective nCATs", "Other")
 
-FOUR_CpGs_Group <- na.omit(FOUR_CpGs_Group)
-
-# p <- left_join(MGMT_RunSum,FOUR_CpGs_Group)
-# 
-# p <- FOUR_CpGs_Group %>% select(SampleID,Average_Cov, Known_status,Average_Nano)
-# p$Nano_Methylation_Status <- if_else(p$Average_Nano > 20, "Methylated", "Unmethylated")
-# p$Nano_Pyro_Concordance <- if_else(p$Known_status == p$Nano_Methylation_Status, "Concordant", "Discordant")
-# 
-# p %>% select(SampleID, Nano_Pyro_Concordance)  %>% group_by(Nano_Pyro_Concordance) %>% tally()
-
-# Depth represented as dot size
-ggplot(FOUR_CpGs_Group, aes(x=Known_status, y=Average_Nano, color = Known_status))+
+#FOUR_CpGs_Beeswarm <- FOUR_CpGs_Beeswarm %>% filter(Series == "Retrospective nCATs")
+                         
+ggplot(FOUR_CpGs_Beeswarm, aes(x=Known_status, y=Average_Nano, color = Known_status))+
   geom_rect(xmin=0, xmax = 2.9, ymin=10, ymax=30, alpha=.2, fill='light grey', color = "black")+
   geom_hline(yintercept = 20, linetype = 2)+
-  geom_beeswarm(aes(size = Average_Cov), alpha = 0.6, cex=3)+
-  scale_size_continuous(name="Coverage",breaks = c(5,10,50,100), range = c(1,10) )+
+  geom_beeswarm(
+  #  aes(size = Average_Cov),
+    alpha = 0.6, cex=3)+
+  #scale_size_continuous(name="Coverage",breaks = c(5,10,50,100), range = c(1,10) )+
   scale_color_brewer(palette = "Set1", guide="none")+
   xlab("Known methylation status")+
-  ylab("Average methylation % nanopore\nCpGs 76-79")+
+  ylab("NP average methylation %\nCpGs 76-79")+
+  facet_grid(~factor(Series, levels = c("Retrospective nCATs", "Other")))+
   theme_bw()+
-  theme(aspect.ratio = 1.5)
+  theme(aspect.ratio = 1)
 ```
 
 ```{r Logistic_regression, echo=FALSE}
@@ -359,23 +362,30 @@ ROC.Predict <- roc(test$P,
                    percent = T, 
                    print.auc = T)
 
-rocs <- list()
+rocs_Pyro <- list()
 
-rocs[["Radium"]] <- ROC.Train
-rocs[["Other"]] <- ROC.Predict
+rocs_Pyro[["Retrospective nCATs"]] <- ROC.Train
+rocs_Pyro[["Other"]] <- ROC.Predict
 
 ##### MAKE ROC curves
 
 #ggroc(ROC.Train) # training set
 #ggroc(ROC.Predict) # prediction set
 
-auc(rocs$Radium)
-auc(rocs$Other)
+auc(rocs_Pyro$`Retrospective nCATs`)
+auc(rocs_Pyro$Other)
 
-ggroc(rocs, size=1.5, alpha = 0.7)+
-  scale_color_brewer(palette = "Dark2", name="Samples",labels=c("Radium\nAUC = 99.15%","\nOther\nAUC = 95.08"))+
+ggroc(rocs_Pyro, aes = c("colour","linetype"),size=1.5, alpha=0.8)+
+  scale_color_manual("",
+                     values = c("black", "darkgrey"),
+                     labels=c("Retrospective nCATs\nAUC = 99.15 %",
+                              "\nOther\nAUC = 95.08 %"))+
+  scale_linetype_manual("", 
+                        values=c("solid","dashed"), 
+                        labels=c("Retrospective nCATs\nAUC = 99.15 %",
+                              "\nOther\nAUC = 95.08 %"))+
   theme_bw(base_size = 16)+
-  theme(legend.position = c(.95, .45),
+  theme(legend.position = c(.95, .65),
         legend.justification = c("right", "top"),
         legend.margin = margin(6, 6, 6, 6))
 ```
@@ -432,7 +442,7 @@ STP27$Series <- ifelse(STP27$Series == "Rapid-CNS", "Rapid-CNS", "Other")
 
 ggplot(STP27, aes(y=CpG_31, x=CpG_84, color = Known_status)) +
   #  stat_function(fun = fun.1, color = "grey", size = 2) +
-  geom_point(size = 5, alpha = 0.6)+
+  geom_point(size = 3, alpha = 0.6)+
   stat_ellipse(aes(fill = Known_status), level = 0.95, geom = "polygon", alpha = 0.1)+
   scale_fill_discrete(guide = "none")+
  # stat_ellipse(level = 0.50, na.rm=T, linetype = 2)+
@@ -442,7 +452,7 @@ ggplot(STP27, aes(y=CpG_31, x=CpG_84, color = Known_status)) +
    # scale_y_continuous(limits = c(0,100),breaks=c(1,10,25,50,75,100))+
   guides(colour = guide_legend(override.aes = list(size=5)))+
   theme_bw(base_size = 10)+
-  facet_wrap(.~fct_rev(Series))+
+  facet_wrap(~factor(Series, levels = c("Rapid-CNS", "Other")))+
   theme(aspect.ratio = 1)
 
 #### Average methylation over STP27 sites
@@ -452,9 +462,6 @@ STP27 <- STP27 %>% mutate(STPMean = rowMeans(select(., starts_with("CpG")), na.r
 
 ggplot(STP27, aes(x=Known_status, y=STPMean))+geom_point()+facet_grid(.~Series)
 
-# remove denstem samples
-STP_plot <- STP27 %>% filter(Series != "DenStem" & Series != "WGS")
-
 # Beeswarm based on cumulative methylation
 
 ggplot(STP_plot, aes(x=Known_status, y=STPMean, color = Known_status))+
@@ -462,43 +469,73 @@ ggplot(STP_plot, aes(x=Known_status, y=STPMean, color = Known_status))+
   geom_beeswarm(aes(color = Known_status), alpha = 0.6,size = 5, cex=3)+
   scale_size_continuous(guide = "none")+
   scale_color_brewer(palette = "Set1", guide="none")+
-  geom_hline(yintercept = 12.5)+
+  #geom_hline(yintercept = 12.5)+
   xlab("Known status (MGMT STP27)")+
-  ylab("Average methylation % \n of cg12434587 and cg12981137")+
+  ylab("Average methylation % \n of CpG 30 and CpG 84")+
   theme_bw(base_size = 18)+
   theme(aspect.ratio = 1.5)+
-  facet_grid(~factor(Series, levels = c("Rapid-CNS", "Radium")))
+  facet_grid(~factor(Series, levels = c("Rapid-CNS", "Other")))
 
-# # STP27 confusion matrix
-# 
-# Series <- factor(c("Radium","Radium","Radium","Radium","Rapid-CNS","Rapid-CNS","Rapid-CNS","Rapid-CNS"))
-# Nanopore_STP27 <- factor(c("Unmethylated", "Unmethylated","Methylated", "Methylated","Unmethylated", "Unmethylated","Methylated", "Methylated"))
-# Known_status <- factor(c("Unmethylated", "Methylated",  "Unmethylated","Methylated","Unmethylated", "Methylated",  "Unmethylated","Methylated"))
-# Y      <- c(35, 8, 1, 24,44,1,2,20)
-# df <- data.frame(Series,Nanopore_STP27, Known_status, Y)
-# 
-# level_order <- c("Unmethylated",  "Methylated")
-# 
-# #df$Series <- factor(df$Series, levels = c("Rapid-CNS","Radium"))
-# 
-# df <- df %>% filter(Series == "Rapid-CNS")
-# 
-# library(ggplot2)
-# ggplot(data =  df, mapping = aes(x = Known_status , y = Nanopore_STP27)) +
-#   geom_tile(aes(fill = Y), colour = "white") +
-#   geom_text(aes(label = sprintf("%1.0f", Y)), vjust = 0.5, size = 18) +
-#  scale_fill_gradient2(low = "red",
-#                        mid = "white",
-#                        high = "grey",
-#                        midpoint = 10)+
-#   ylab("Nanopore seq")+
-#   xlab("MGMT STP27")+
-#    scale_x_discrete(limits = level_order)+
-#    scale_y_discrete(limits = level_order)+
-#   theme_bw(base_size = 28)+
-#   theme(legend.position = "none", aspect.ratio = 1)
-#+ facet_grid(.~Series)
 
+```
+
+```{r STP27 regression model, echo=FALSE, out.width="100%"}
+###################### STP27 regression model
+
+Stp27.train <- STP27 %>% filter(Series == "Rapid-CNS") %>% select(2,3,6)
+Stp27.train$P <- ifelse(Stp27.train$Known_status=="Methylated",1,0)
+Stp27.train <- Stp27.train[order(Stp27.train$P),]
+
+stp.model <- glm(P ~ CpG_31 + CpG_84, family = "binomial", data = Stp27.train)
+
+
+
+Stp27.test <- STP27 %>% filter(Series != "Rapid-CNS") %>% select(2,3,6)
+Stp27.test$P <- ifelse(Stp27.test$Known_status=="Methylated",1,0)
+Stp27.test <- Stp27.test[order(Stp27.test$P),]
+
+stp.predicted <- predict(stp.model, Stp27.test, type = "response")
+
+
+
+##### Stp ROC curves
+
+#### make the ROC cur
+library(pROC)
+
+stp.ROC.Train <- roc(Stp27.train$P, 
+                     stp.model$fitted.values, 
+                     legacy.axes = T, 
+                     percent = T, 
+                     print.auc = T)
+
+stp.ROC.Predict <- roc(Stp27.test$P, 
+                    stp.predicted,
+                   legacy.axes = T, 
+                   percent = T, 
+                   print.auc = T)
+
+auc(stp.ROC.Train)
+auc(stp.ROC.Predict)
+
+rocs.STP <- list()
+
+rocs.STP[["Rapid-CNS"]] <- stp.ROC.Train
+rocs.STP[["Other"]] <- stp.ROC.Predict
+
+ggroc(rocs.STP, aes = c("colour","linetype"),size=1.5, alpha = 0.7)+
+  scale_color_manual("",
+                     values = c("black", "darkgrey"),
+                     labels=c("Rapid-CNS\nAUC = 92.9 %",
+                              "\nOther\nAUC = 93.3 %"))+
+  scale_linetype_manual("", 
+                        values=c("solid","dashed"), 
+                        labels=c("Rapid-CNS\nAUC = 92.9 %",
+                                 "\nOther\nAUC = 93.3 %"))+
+  theme_bw(base_size = 16)+
+  theme(legend.position = c(.95, .65),
+        legend.justification = c("right", "top"),
+        legend.margin = margin(6, 6, 6, 6))
 ```
 
 
