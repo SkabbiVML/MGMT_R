@@ -68,6 +68,7 @@ Stp27.train <- STP27 %>% filter(Series == "Rapid-CNS") %>% select(2,3,6)
 Stp27.train$P <- ifelse(Stp27.train$Known_status=="Methylated",1,0)
 Stp27.train <- Stp27.train[order(Stp27.train$P),]
 
+
 stp.model <- glm(P ~ CpG_31 + CpG_84, family = "binomial", data = Stp27.train)
 
 
@@ -75,6 +76,7 @@ stp.model <- glm(P ~ CpG_31 + CpG_84, family = "binomial", data = Stp27.train)
 Stp27.test <- STP27 %>% filter(Series != "Rapid-CNS") %>% select(2,3,6)
 Stp27.test$P <- ifelse(Stp27.test$Known_status=="Methylated",1,0)
 Stp27.test <- Stp27.test[order(Stp27.test$P),]
+Stp27.test <- na.omit(Stp27.test)
 
 stp.predicted <- predict(stp.model, Stp27.test, type = "response")
 
