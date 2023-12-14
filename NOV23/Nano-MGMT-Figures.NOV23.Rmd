@@ -151,13 +151,15 @@ barplot_data$Diagnosis <- factor(barplot_data$Diagnosis, levels = c("Glioblastom
 
 ggplot(barplot_data, aes(x=Diagnosis, y= Samples, fill=Known_status, label = Samples))+
   geom_bar(stat = "identity")+
-  coord_flip()+
+ # coord_flip()+
   scale_fill_brewer(name="Known status", palette="Set1")+
-  scale_x_discrete(limits = c("Other", "IDH glioma","Glioblastoma"))+
-  geom_text(size = 5, position = position_stack(vjust = 0.5))+
+  scale_x_discrete(limits = c("Glioblastoma", "IDH glioma", "Other"))+
+  geom_text(size = 5, 
+            position = position_stack(vjust = 0.5),
+            )+
   theme_classic(base_size = 16)+
   xlab("")+
-  theme(legend.position = "top", aspect.ratio = 0.3 )
+  theme(legend.position = "top", aspect.ratio = 1 )
 ```
 
 
@@ -168,17 +170,18 @@ ggplot(barplot_data, aes(x=Diagnosis, y= Samples, fill=Known_status, label = Sam
 ggplot(MGMT_RunSum, aes(x=Method, y=MED_cov))+
   geom_boxplot(aes(fill=Known_status), alpha = 0.2)+
   geom_point(size = 2, position = position_jitterdodge(0.2,0), alpha = 0.7, aes(color=Known_status))+
-  coord_flip()+
+  #coord_flip()+
   scale_color_brewer(name="Known status", palette = "Set1")+
   scale_fill_brewer(name="Known status", palette="Set1")+
   scale_x_discrete(
-    labels = c("WGSeq","Adaptive\nSampling", "Barcoded\nnCATs","Single\nnCATs" ), limits=c("WG_Seq", "AdaptiveSampling", "Barcoded", "Single" )
+    labels = c("Single\nnCATs", "Barcoded\nnCATs","Adaptive\nSampling", "WGSeq"), 
+    limits=c("Single", "Barcoded", "AdaptiveSampling","WG_Seq")
     )+
   scale_y_continuous(trans = 'log10', breaks = c(1,10,100,1000), limits = c(0.9,1000))+
   xlab ("")+
   ylab("Median methylation coverage") +
-  theme_bw(base_size = 12)+
-  theme(legend.position = "top", aspect.ratio = 0.3 )
+  theme_bw(base_size = 16)+
+  theme(legend.position = "top", aspect.ratio = 1 )
 
 ```
 
@@ -272,40 +275,6 @@ ggplot(FOUR_CpGs_Group, aes(x=Average_Pyro, y=Average_Nano)) +
 
 Use 4 CpG sites (methylation cutoff 10%) to classify all samples, compared to known status
 
-```{r BeeSwarm, echo=FALSE, out.width="100%",fig.cap="Average nanopore sequencing percentage of CpGs 76-79 agains the Pyrosequencing classification"}
-
-library(ggbeeswarm)
-
-# Add the Pyro kit results to the table
-FOUR_CpGs_Beeswarm <- All_MGMT %>% filter(between(Pos, 129467253, 129467272)) %>% select(1:4)
-
-FOUR_CpGs_Beeswarm <- All_MGMT %>% filter(between(Pos, 129467253, 129467272)) %>% 
-  select(1:4) %>%
-  group_by(SampleID) %>% 
-  summarise(Average_Nano=mean(Methylation_percent), 
-            Average_Cov=mean(Valid_cov)) %>%
-  left_join(Samples) %>%
-  filter(Average_Cov>2) 
-
-FOUR_CpGs_Beeswarm$Series <-  ifelse(FOUR_CpGs_Beeswarm$Series == "Radium", "Retrospective nCATs", "Other")
-
-#FOUR_CpGs_Beeswarm <- FOUR_CpGs_Beeswarm %>% filter(Series == "Retrospective nCATs")
-                         
-ggplot(FOUR_CpGs_Beeswarm, aes(x=Known_status, y=Average_Nano, color = Known_status))+
-  geom_rect(xmin=0, xmax = 2.9, ymin=10, ymax=30, alpha=.2, fill='light grey', color = "black")+
-  geom_hline(yintercept = 20, linetype = 2)+
-  geom_beeswarm(
-  #  aes(size = Average_Cov),
-    alpha = 0.6, cex=3)+
-  #scale_size_continuous(name="Coverage",breaks = c(5,10,50,100), range = c(1,10) )+
-  scale_color_brewer(palette = "Set1", guide="none")+
-  xlab("Known methylation status")+
-  ylab("NP average methylation %\nCpGs 76-79")+
-  facet_grid(~factor(Series, levels = c("Retrospective nCATs", "Other")))+
-  theme_bw()+
-  theme(aspect.ratio = 1)
-```
-
 ```{r Logistic_regression, echo=FALSE}
 ### Use the Radium samples to make a training model 
 
@@ -390,6 +359,42 @@ ggroc(rocs_Pyro, aes = c("colour","linetype"),size=1.5, alpha=0.8)+
         legend.margin = margin(6, 6, 6, 6))
 ```
 
+```{r BeeSwarm, echo=FALSE, out.width="100%",fig.cap="Average nanopore sequencing percentage of CpGs 76-79 agains the Pyrosequencing classification"}
+
+library(ggbeeswarm)
+
+# Add the Pyro kit results to the table
+FOUR_CpGs_Beeswarm <- All_MGMT %>% filter(between(Pos, 129467253, 129467272)) %>% select(1:4)
+
+FOUR_CpGs_Beeswarm <- All_MGMT %>% filter(between(Pos, 129467253, 129467272)) %>% 
+  select(1:4) %>%
+  group_by(SampleID) %>% 
+  summarise(Average_Nano=mean(Methylation_percent), 
+            Average_Cov=mean(Valid_cov)) %>%
+  left_join(Samples) %>%
+  filter(Average_Cov>2) 
+
+FOUR_CpGs_Beeswarm$Series <-  ifelse(FOUR_CpGs_Beeswarm$Series == "Radium", "Retrospective nCATs", "Other")
+
+#FOUR_CpGs_Beeswarm <- FOUR_CpGs_Beeswarm %>% filter(Series == "Retrospective nCATs")
+                         
+ggplot(FOUR_CpGs_Beeswarm, aes(x=Known_status, y=Average_Nano, color = Known_status))+
+  geom_rect(xmin=0, xmax = 2.9, ymin=10, ymax=30, alpha=.2, fill='light grey', color = "black")+
+  geom_hline(yintercept = 20, linetype = 2)+
+  geom_beeswarm(
+  #  aes(size = Average_Cov),
+    alpha = 0.6, cex=3)+
+  #scale_size_continuous(name="Coverage",breaks = c(5,10,50,100), range = c(1,10) )+
+  scale_color_brewer(palette = "Set1", guide="none")+
+  xlab("Known methylation status")+
+  ylab("NP average methylation %\nCpGs 76-79")+
+  facet_grid(~factor(Series, levels = c("Retrospective nCATs", "Other")))+
+  theme_bw()+
+  theme(aspect.ratio = 1)
+```
+
+
+
 ```{r Concordance, echo=FALSE, eval=FALSE}
 knitr::kable(p2)
 ```
@@ -407,7 +412,8 @@ STP27 <- All_MGMT %>%
   select(1:2,4) %>% 
   pivot_wider(names_from = Pos, values_from=Methylation_percent) %>%
   inner_join(MGMT_RunSum) %>%
-  filter(AVG_cov>2)
+  filter(AVG_cov>2) %>%
+  na.omit()
 
 colnames(STP27) <- c("SampleID", "CpG_31", "CpG_84", "Series", "Method", "Known_status", "Diagnosis","AVG_cov","MED_cov" )
 
@@ -423,8 +429,10 @@ ggplot(STP27, aes(y=CpG_31, x=CpG_84, color = Known_status)) +
   scale_color_brewer(name="Known Status", palette = "Set1")+
   # scale_x_continuous(limits = c(0,100),breaks=c(1,10,25,50,75,100))+
    # scale_y_continuous(limits = c(0,100),breaks=c(1,10,25,50,75,100))+
+  xlab("CpG 84 (cg12981137) % methylated (NP)")+
+  ylab("CpG 31 (cg12434587)\n% methylated (NP)")+
   guides(colour = guide_legend(override.aes = list(size=5)))+
-  theme_bw(base_size = 10)+
+  theme_bw(base_size = 16)+
   facet_wrap(~factor(Series, levels = c("Rapid-CNS", "Other")))+
   theme(aspect.ratio = 1)
 
@@ -502,13 +510,13 @@ ggplot(STP27, aes(x = Known_status, y = predictions, color = Known_status))+
   geom_hline(yintercept = 0, linetype = 2)+
   geom_beeswarm(
     #  aes(size = Average_Cov),
-    alpha = 0.6, cex=3)+
+    alpha = 0.6, cex=3, size=3)+
   #scale_size_continuous(name="Coverage",breaks = c(5,10,50,100), range = c(1,10) )+
   scale_color_brewer(palette = "Set1", guide="none")+
   xlab("Known methylation status")+
   ylab("Linear prediction \n CpG31 and CpG84")+
   facet_grid(~factor(Series, levels = c("Rapid-CNS", "Other")))+
-  theme_bw()+
+  theme_bw(base_size = 16)+
   theme(aspect.ratio = 1)
 
 ```
@@ -589,7 +597,7 @@ pheatmap(MGMT_long_island,
                 cluster_rows = T,
                 cluster_cols = F,
                  clustering_method = "ward.D",
-                 cutree_rows = 2,
+                 cutree_rows = 3,
                  treeheight_row = 30,
                  border_color = NA,
                  scale = "none",
@@ -715,7 +723,7 @@ row_anno_GBM <- row_anno[1]
           cluster_rows = T,
          cluster_cols = F,
          clustering_method = "ward.D",
-         cutree_rows = 2,
+         cutree_rows = 3,
          treeheight_row = 20,
          border_color = NA,
          scale = "none",
@@ -832,6 +840,7 @@ ggsurvplot(
   pval.coord = c(0, 0.1),
   font.x = c(14, "bold", "black"),
   font.y = c(14, "bold", "black"),
+  font.legend = 16,
   surv.median.line = "hv",
   risk.table = TRUE)
 
@@ -843,15 +852,14 @@ ggsurvplot(
   xlab = "OS, Months",
   ylab = "Overall survival probability",
   legend.title = "Nanopore",
-  #legend.labs = c("Cluster 1", "Cluster 2", "Cluster 3"),
   legend.labs = c("Cluster 1", "Cluster 2"),
   pval = TRUE,
   pval.coord = c(0, 0.1),
   font.x = c(14, "bold", "black"),
   font.y = c(14, "bold", "black"),
+  font.legend = 16,
  surv.median.line = "hv",
   risk.table = TRUE)
-
 # # By resection type
 # ggsurvplot(
 #   fit = fit3_filt,
