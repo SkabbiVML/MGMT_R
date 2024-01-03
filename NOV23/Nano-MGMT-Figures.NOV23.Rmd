@@ -804,7 +804,7 @@ cluster_surv_filt <- cluster_surv %>% filter(Diagnosis == "GBM" & # only include
                                                Reopr == 0 & # Only include primary cases
                                                Onc.treatment == "Stupp") # Only include patients that recieve full treatment
                                                
-
+cluster_surv_filt$cluster <- ifelse(cluster_surv_filt$cluster == 1,2,1) # workaraound to fix group ordering in KM-plot
 
 ####################### Survival
 library(survival)
@@ -848,17 +848,17 @@ ggsurvplot(
 ggsurvplot(
   fit = fit2_filt,
   data = cluster_surv_filt,
-  palette = c("cornflowerblue","darkorange3"),
+  palette = c("darkorange3","cornflowerblue"),
   xlab = "OS, Months",
   ylab = "Overall survival probability",
   legend.title = "Nanopore",
-  legend.labs = c("Cluster 1", "Cluster 2"),
+  legend.labs = c("Cluster 2", "Cluster 1"),
   pval = TRUE,
   pval.coord = c(0, 0.1),
   font.x = c(14, "bold", "black"),
   font.y = c(14, "bold", "black"),
   font.legend = 16,
- surv.median.line = "hv",
+  surv.median.line = "hv",
   risk.table = TRUE)
 # # By resection type
 # ggsurvplot(
