@@ -390,7 +390,7 @@ Examine methylation on STP27 sites (Figure 3a)
 
 STP27 <- All_MGMT %>% 
   filter(Pos == 129466944 | Pos == 129467310) %>% 
-  select(1:2,4) %>% 
+  dplyr::select(1:2,4) %>% 
   pivot_wider(names_from = Pos, values_from=Methylation_percent) %>%
   inner_join(MGMT_RunSum) %>%
   filter(AVG_cov>2) %>%
@@ -408,14 +408,16 @@ ggplot(STP27, aes(y=CpG_31, x=CpG_84, color = Known_status)) +
  # stat_ellipse(level = 0.50, na.rm=T, linetype = 2)+
   #  scale_size_continuous(name="Depth",breaks = c(5,15,30), range = c(1,8))+
   scale_color_brewer(name="Known Status", palette = "Set1")+
-  # scale_x_continuous(limits = c(0,100),breaks=c(1,10,25,50,75,100))+
-   # scale_y_continuous(limits = c(0,100),breaks=c(1,10,25,50,75,100))+
+  scale_x_continuous(breaks=c(0,20,40,60,80,100))+
+  scale_y_continuous(breaks=c(0,20,40,60,80,100))+
   xlab("CpG 84 (cg12981137) % methylated (NP)")+
   ylab("CpG 31 (cg12434587)\n% methylated (NP)")+
   guides(colour = guide_legend(override.aes = list(size=5)))+
   theme_bw(base_size = 16)+
   facet_wrap(~factor(Series, levels = c("Rapid-CNS", "Other")))+
-  theme(aspect.ratio = 1)
+  theme(aspect.ratio = 1, 
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank())
 
 #### Average methylation over STP27 sites
 
@@ -538,7 +540,7 @@ library(RColorBrewer)
 library(tibble)
 
 MGMT_long_island <- All_MGMT_Island %>%
-  select(c("SampleID", "Pos", "Methylation_percent")) %>%
+  dplyr::select(c("SampleID", "Pos", "Methylation_percent")) %>%
   pivot_wider(names_from = Pos, values_from=Methylation_percent) %>%
   column_to_rownames("SampleID")
 
@@ -565,12 +567,28 @@ row_anno$Diagnosis <- ifelse(
 
 colnames(row_anno) <- c("Known status", "Diagnosis")
 
-ann_colors <- list("Known status"=c("Unmethylated"="#377EB8", 
-                                    "Methylated"="#E41A1C"), 
-                   "Diagnosis"=c("Glioblastoma"="#31688EFF", 
-                                 "IDHglioma"="#440154FF", 
-                                 "Other"="#35B779FF"))
+ann_colors <- list(
+  "Known status" = c("Unmethylated"="#377EB8", 
+                   "Methylated"="#E41A1C"), 
+  Diagnosis = c("Glioblastoma"="#31688EFF", 
+                "IDHglioma"="#440154FF", 
+                "Other"="#35B779FF"),
+  Method = c("STP-27" = "black", 
+             "MGMT-Pyro" = "darkgrey", 
+             " "  = "white")
+)
 
+col_anno <- data.frame(Method=c(c(1:30), 
+                                "STP-27",c(32:75), 
+                                "MGMT-Pyro",
+                                "MGMT-Pyro",
+                                "MGMT-Pyro",
+                                "MGMT-Pyro", 
+                                c(80:83),
+                                "STP-27",
+                                c(85:98)
+                                ))
+col_anno$Method <- ifelse(col_anno$Method == "STP-27","STP-27", ifelse(col_anno$Method == "MGMT-Pyro", "MGMT-Pyro", " "))
 
 
 pheatmap(MGMT_long_island,
@@ -589,7 +607,7 @@ pheatmap(MGMT_long_island,
                  legend = T,
                  show_rownames = F,
                  legend_breaks = seq(0,100,10),
-               #  annotation_col = col_anno,
+                 annotation_col = col_anno,
                  annotation_row = row_anno,
                  annotation_colors = ann_colors,
      #            # main = "All samples,  (n=148)",
@@ -620,17 +638,26 @@ x2 <- left_join(x, y2) %>%
      filter(!str_detect(SampleID, "^T")) %>% # Filter out DenStem and WGS samples as they are different biopsies analysed for pyro and nano
   na.omit() 
 
-x3 <- x2  %>% 
+dotplot <- x2  %>% 
   gather(key = "CpG", value = "percentMeth", -c(Known_status,SampleID)) %>% 
   group_by(Known_status, CpG) %>% 
   summarise(Average_Methylation = mean(percentMeth), SD_Methylation = sd(percentMeth))
 
 
-x3$CpG_row <- as.integer(rep(c(1:98),2))
+dotplot$CpG_row <- as.integer(rep(c(1:98),2))
 
+regions <- tibble(x1 = 75.5, x2 = 79.5, y1 = -10, y2 = 99, y3 =90, x3 = 31, y4 = 90, x4 = 84)
 
-
-ggplot(x3, aes(x=CpG_row, y=Average_Methylation, group =  Known_status))+
+ggplot(dotplot, aes(x=CpG_row, y=Average_Methylation, group=Known_status))+
+  geom_rect(data = regions,   # make a transparent box around the MGMT Pyro sites
+            inherit.aes = FALSE,
+            mapping = aes(xmin = x1, xmax = x2,
+                          ymin = y1, ymax = y2),
+            color = "transparent",
+            fill = "black",
+            alpha = .2)+
+  geom_text(mapping = aes(y=75,x=31), label = "*", size = 10)+ # mark the two STP27 sites 
+  geom_text(mapping = aes(y=80,x=84), label = "*", size = 10)+
   geom_point(aes(color=Known_status), position = position_dodge(width = 0.9), size = 2)+
   geom_linerange(aes(ymin=Average_Methylation-SD_Methylation, ymax=Average_Methylation+SD_Methylation,color=Known_status),position = position_dodge(width = 0.9))+
   scale_color_brewer(palette = "Set1", name = "Known status")+
@@ -701,7 +728,7 @@ row_anno_GBM <- row_anno[1]
           cluster_rows = T,
          cluster_cols = F,
          clustering_method = "ward.D",
-         cutree_rows = 3,
+         cutree_rows = 2,
          treeheight_row = 20,
          border_color = NA,
          scale = "none",
@@ -713,7 +740,7 @@ row_anno_GBM <- row_anno[1]
          legend = T,
          show_rownames = F,
          legend_breaks = seq(0,100,10),
- #         annotation_col = col_anno,
+         annotation_col = col_anno,
           annotation_row = row_anno_GBM,
          annotation_colors = ann_colors,
          legend_labels = c("0%","10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%")

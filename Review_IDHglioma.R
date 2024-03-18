@@ -69,33 +69,6 @@ plotIndiv(plsda.mgmt,
 
 
 
-##################
-
-pheatmap(MGMT_long_island,
-         cluster_rows = T,
-         cluster_cols = T,
-         clustering_method = "ward.D",
-         cutree_rows = 3,
-         cutree_cols = 5,
-         treeheight_row = 30,
-         border_color = NA,
-         scale = "none",
-         drop_levels = T,
-         color = rev(brewer.pal(n = 10, name = "Spectral")),
-         fontsize_col = 8,
-         fontsize_row = 5,
-         fontsize = 12,
-         legend = T,
-         show_rownames = F,
-         legend_breaks = seq(0,100,10),
-         #  annotation_col = col_anno,
-         annotation_row = row_anno,
-         annotation_colors = ann_colors,
-         #            # main = "All samples,  (n=148)",
-         legend_labels = c("0%","10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%")
-)
-
-
 
 ################### PLS-DA
 
@@ -127,3 +100,37 @@ Table <- MGMT_RunSum %>%
   spread(Diagnosis,n) %>%
   replace(is.na(.), 0) %>%
   adorn_totals(c("row", "col"))
+
+##########
+################## Heatmap to examine IDHglioma clustering
+
+meth_glio <- row_anno %>% filter( Diagnosis != "Other") 
+meth_glio$Known_status <- NULL
+MGMT_meth_glio <- MGMT_long_island[rownames(meth_glio),]
+
+pheatmap(MGMT_meth_glio,
+         cluster_rows = T,
+         cluster_cols = F,
+         clustering_method = "ward.D",
+         cutree_rows = 3,
+         #cutree_cols = 5,
+         treeheight_row = 100,
+         border_color = NA,
+         scale = "none",
+         drop_levels = T,
+         color = rev(brewer.pal(n = 10, name = "Spectral")),
+         fontsize_col = 8,
+         fontsize_row = 5,
+         fontsize = 12,
+         legend = T,
+         show_rownames = F,
+         legend_breaks = seq(0,100,10),
+         #  annotation_col = col_anno,
+         annotation_row = meth_glio,
+         annotation_colors = ann_colors,
+         main = "Methylated IDHwt GBM and IDHmut Glioma,  (n=64)",
+         legend_labels = c("0%","10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%")
+)
+
+
+
