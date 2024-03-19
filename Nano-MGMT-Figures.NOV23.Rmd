@@ -550,32 +550,17 @@ colnames(MGMT_long_island ) <- c(1:98)
 
 
 # 
-row_anno <- MGMT_RunSum %>%
-  dplyr::select(SampleID,Known_status,Diagnosis) %>%
-  distinct() %>% column_to_rownames("SampleID") 
-# %>%
-#   filter(Diagnosis == "Glioblastoma")
-
-row_anno <- na.omit(row_anno[rownames(MGMT_long_island),])
-MGMT_long_island <- MGMT_long_island[rownames(row_anno),]
-
-row_anno$Diagnosis <- ifelse(
-  row_anno$Diagnosis == "Astrocytoma" | 
-    row_anno$Diagnosis == "Oligodendroglioma" | 
-    row_anno$Diagnosis == "Astrocytoma HG", "IDHglioma", 
-  ifelse(row_anno$Diagnosis == "Glioblastoma", "Glioblastoma", "Other"))
-
-colnames(row_anno) <- c("Known status", "Diagnosis")
-
 ann_colors <- list(
   "Known status" = c("Unmethylated"="#377EB8", 
                    "Methylated"="#E41A1C"), 
   Diagnosis = c("Glioblastoma"="#31688EFF", 
                 "IDHglioma"="#440154FF", 
                 "Other"="#35B779FF"),
-  Method = c("STP-27" = "black", 
+  "Assay CpG sites"= c("STP-27" = "black", 
              "MGMT-Pyro" = "darkgrey", 
-             " "  = "white")
+             " "  = "white"),
+  "Original evaluation" = c("STP-27" = "#addc30",
+                            "MGMT-Pyro" = "#21918c")
 )
 
 col_anno <- data.frame(Method=c(c(1:30), 
@@ -590,28 +575,49 @@ col_anno <- data.frame(Method=c(c(1:30),
                                 ))
 col_anno$Method <- ifelse(col_anno$Method == "STP-27","STP-27", ifelse(col_anno$Method == "MGMT-Pyro", "MGMT-Pyro", " "))
 
+names(col_anno) <- "Assay CpG sites"
+
+#################### New row anno to include detection method 
+
+row_anno <- MGMT_RunSum %>%
+  dplyr::select(SampleID,Known_status,Series,Diagnosis) %>%
+  distinct() %>% column_to_rownames("SampleID") 
+# %>%
+#   filter(Diagnosis == "Glioblastoma")
+
+row_anno <- na.omit(row_anno[rownames(MGMT_long_island),])
+MGMT_long_island <- MGMT_long_island[rownames(row_anno),]
+
+row_anno$Diagnosis <- ifelse(
+  row_anno$Diagnosis == "Astrocytoma" | 
+    row_anno$Diagnosis == "Oligodendroglioma" | 
+    row_anno$Diagnosis == "Astrocytoma HG", "IDHglioma", 
+  ifelse(row_anno$Diagnosis == "Glioblastoma", "Glioblastoma", "Other"))
+
+row_anno$Series <- ifelse(row_anno$Series == "Rapid-CNS", "STP-27", "MGMT-Pyro")
+
+colnames(row_anno) <- c("Known status", "Original evaluation", "Diagnosis")
 
 pheatmap(MGMT_long_island,
-                cluster_rows = T,
-                cluster_cols = F,
-                 clustering_method = "ward.D",
-                 cutree_rows = 3,
-                 treeheight_row = 30,
-                 border_color = NA,
-                 scale = "none",
-                 drop_levels = T,
-                 color = rev(brewer.pal(n = 10, name = "Spectral")),
-                 fontsize_col = 8,
-                 fontsize_row = 4,
-                 fontsize = 12,
-                 legend = T,
-                 show_rownames = F,
-                 legend_breaks = seq(0,100,10),
-                 annotation_col = col_anno,
-                 annotation_row = row_anno,
-                 annotation_colors = ann_colors,
-     #            # main = "All samples,  (n=148)",
-                 legend_labels = c("0%","10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%")
+         cluster_rows = T,
+         cluster_cols = F,
+         clustering_method = "ward.D",
+         cutree_rows = 3,
+         treeheight_row = 30,
+         border_color = NA,
+         scale = "none",
+         drop_levels = T,
+         color = rev(brewer.pal(n = 10, name = "Spectral")),
+         fontsize_col = 8,
+         fontsize_row = 4,
+         fontsize = 12,
+         legend = T,
+         show_rownames = F,
+         legend_breaks = seq(0,100,10),
+         annotation_col = col_anno,
+         annotation_row = row_anno,
+         annotation_colors = ann_colors,
+         legend_labels = c("0%","10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%")
 )
 
 
