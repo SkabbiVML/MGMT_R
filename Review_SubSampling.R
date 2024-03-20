@@ -4,36 +4,141 @@ library(purrr)
 ## Also load MGMT.Rdata from github
 
 ###############
-###  Create a single data frame from all the bedmethyl files
+###  Create a single data frame from all the bedmethyl files subsamples to 6 reads (median cov should be 5)
 ############
 
-#Subsample <- read.delim("~/MGMT/Export/SubSampling/FIVE_reads_ALL/", header = F)
 
 #files <- list.files(pattern = '\\.FIVE_reads.methyl.bed$', full.names = F)
-files <- list.files(pattern = '\\methyl.bed$', full.names = F) # for stepwise subsampling
+files <- list.files(path="../../../MGMT/Export/SubSampling/6.reads.modbed/",  pattern = "methyl.bed", full.names = T) # for stepwise subsampling
 
-Subsample <- map_df(files, ~read.delim2(.x, header = F) %>% mutate(File = basename(.x)))
+Subsample5 <- map_df(files, ~read.delim2(.x, header = F) %>% mutate(File = basename(.x)))
 
 #Subsample$File <- gsub(".FIVE_reads.methyl.bed","",Subsample$File)
-Subsample$File <- gsub(".methyl.bed","",Subsample$File) # for stepwise subsampling
+Subsample5$File <- gsub(".6_reads.methyl.bed","",Subsample5$File) # for stepwise subsampling
 
 
-Subsample <- Subsample %>% select(2,10:19) %>% relocate(11)
+Subsample5 <- Subsample5 %>% select(2,10:19) %>% relocate(11)
 
-names(Subsample) <- c("SampleID", "Pos", "Valid_cov", "Methylation_percent", "N_mod", "N_canon", "N_other_mod", "N_delete", "N_fail", "N_diff", "N_nocall")
+names(Subsample5) <- c("SampleID", "Pos", "Valid_cov", "Methylation_percent", "N_mod", "N_canon", "N_other_mod", "N_delete", "N_fail", "N_diff", "N_nocall")
 
-Subsample$Methylation_percent <- as.numeric(Subsample$Methylation_percent)
+Subsample5$Methylation_percent <- as.numeric(Subsample5$Methylation_percent)
 
 # Extract the 98 CpG sites in the MGMT CpG island
-Subsample_Island <- Subsample %>% filter(between(Pos, 129466683, 129467448))
+Subsample_Island_5 <- All_MGMT %>% dplyr::filter(between(Pos, 129466683, 129467448))
 
 # Calculate mean and median coverage of each CpG site
-cov <- Subsample_Island %>% 
+cov5 <- Subsample_Island_5 %>% 
   group_by(SampleID) %>% 
-  summarise(AVG_cov = mean(Valid_cov), MED_cov = median(Valid_cov), Avg_meth = mean(Methylation_percent)) %>%
-  separate(SampleID, c("SampleID","Sample"), sep="[.]")
+  summarise(AVG_cov = mean(Valid_cov), MED_cov = median(Valid_cov), Avg_meth = mean(Methylation_percent)) 
 
-#Subsample_RunSum <- inner_join(Samples,cov)
+###############
+####3 Repeat for subsample 11
+
+files <- list.files(path="../../../MGMT/Export/SubSampling/11.reads.modbed",  pattern = "methyl.bed", full.names = T) # for stepwise subsampling
+
+Subsample10 <- map_df(files, ~read.delim2(.x, header = F) %>% mutate(File = basename(.x)))
+
+#Subsample$File <- gsub(".FIVE_reads.methyl.bed","",Subsample$File)
+Subsample10$File <- gsub(".11_reads.methyl.bed","",Subsample10$File) # for stepwise subsampling
+
+
+Subsample10 <- Subsample10 %>% select(2,10:19) %>% relocate(11)
+
+names(Subsample10) <- c("SampleID", "Pos", "Valid_cov", "Methylation_percent", "N_mod", "N_canon", "N_other_mod", "N_delete", "N_fail", "N_diff", "N_nocall")
+
+Subsample10$Methylation_percent <- as.numeric(Subsample10$Methylation_percent)
+
+# Extract the 98 CpG sites in the MGMT CpG island
+Subsample_Island_10 <- Subsample10 %>% dplyr::filter(between(Pos, 129466683, 129467448))
+
+# Calculate mean and median coverage of each CpG site
+cov10 <- Subsample_Island_10 %>% 
+  group_by(SampleID) %>% 
+  summarise(AVG_cov = mean(Valid_cov), MED_cov = median(Valid_cov), Avg_meth = mean(Methylation_percent)) 
+
+######################
+
+# pull samples that have 20 or more median coverage
+
+cov_Full <- cov %>% filter(MED_cov > 19)
+
+######################
+
+#####################
+# Get a list of all samples that have high readcount in the full list and are also represented in the subsampled files
+#####################
+
+List_of_subsampling <- intersect(intersect(cov_Full$SampleID, cov5$SampleID),cov10$SampleID)
+
+All_MGMT_subsample_full <- All_MGMT_Island %>% filter(SampleID %in% List_of_subsampling) %>%
+  dplyr::select(c("SampleID", "Pos", "Methylation_percent")) %>%
+  pivot_wider(names_from = Pos, values_from=Methylation_percent) %>%
+  column_to_rownames("SampleID")
+
+All_MGMT_subsample_10 <- Subsample_Island_10 %>% filter(SampleID %in% List_of_subsampling) %>%
+  dplyr::select(c("SampleID", "Pos", "Methylation_percent")) %>%
+  pivot_wider(names_from = Pos, values_from=Methylation_percent) %>%
+  column_to_rownames("SampleID")
+
+All_MGMT_subsample_5 <- Subsample_Island_5 %>% filter(SampleID %in% List_of_subsampling) %>%
+  dplyr::select(c("SampleID", "Pos", "Methylation_percent")) %>%
+  pivot_wider(names_from = Pos, values_from=Methylation_percent) %>%
+  column_to_rownames("SampleID")
+
+colnames(All_MGMT_subsample_full) <- c(1:98)
+colnames(All_MGMT_subsample_10) <- c(1:98)
+colnames(All_MGMT_subsample_5) <- c(1:98)
+
+
+###### clustering
+
+res_full <- pheatmap(All_MGMT_subsample_full,
+                cluster_rows = T,
+                cluster_cols = F,
+                clustering_method = "ward.D",
+                cutree_rows = 3,
+                scale = "none",
+                drop_levels = T,
+)
+
+MGMT_clusters_full <- data.frame(cluster=cutree(res_full$tree_row, k=3))
+
+MGMT_clusters_full$SampleID <- rownames(MGMT_clusters_full)
+
+names(MGMT_clusters_full) <- c("cluster_full", "SampleID")
+
+
+res_10 <- pheatmap(All_MGMT_subsample_10,
+                     cluster_rows = T,
+                     cluster_cols = F,
+                     clustering_method = "ward.D",
+                     cutree_rows = 3,
+                     scale = "none",
+                     drop_levels = T,
+)
+
+MGMT_clusters_10 <- data.frame(cluster=cutree(res_10$tree_row, k=3))
+
+MGMT_clusters_10$SampleID <- rownames(MGMT_clusters_10)
+
+names(MGMT_clusters_10) <- c("cluster_10", "SampleID")
+
+res_5 <- pheatmap(All_MGMT_subsample_5,
+                   cluster_rows = T,
+                   cluster_cols = F,
+                   clustering_method = "ward.D",
+                   cutree_rows = 3,
+                   scale = "none",
+                   drop_levels = T,
+)
+
+MGMT_clusters_5 <- data.frame(cluster=cutree(res_5$tree_row, k=3))
+
+MGMT_clusters_5$SampleID <- rownames(MGMT_clusters_5)
+
+names(MGMT_clusters_5) <- c("cluster_5", "SampleID")
+
+clust_compare <- left_join(MGMT_clusters_full,MGMT_clusters_10) %>% left_join(MGMT_clusters_5)
 
 #####################
 ### FOR STEPWISE ONLY
