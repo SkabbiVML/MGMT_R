@@ -10,6 +10,7 @@ library(purrr)
 
 #files <- list.files(pattern = '\\.FIVE_reads.methyl.bed$', full.names = F)
 files <- list.files(path="../../../MGMT/Export/SubSampling/6.reads.modbed/",  pattern = "methyl.bed", full.names = T) # for stepwise subsampling
+files <- list.files(path="E:/6.reads.modbed/",  pattern = "methyl.bed", full.names = T)
 
 Subsample5 <- map_df(files, ~read.delim2(.x, header = F) %>% mutate(File = basename(.x)))
 
@@ -35,6 +36,8 @@ cov5 <- Subsample_Island_5 %>%
 ####3 Repeat for subsample 11
 
 files <- list.files(path="../../../MGMT/Export/SubSampling/11.reads.modbed",  pattern = "methyl.bed", full.names = T) # for stepwise subsampling
+files <- list.files(path="E:/11.reads.modbed/",  pattern = "methyl.bed", full.names = T) # for stepwise subsampling
+
 
 Subsample10 <- map_df(files, ~read.delim2(.x, header = F) %>% mutate(File = basename(.x)))
 
@@ -70,7 +73,7 @@ cov_Full <- cov %>% filter(MED_cov > 19)
 
 List_of_subsampling <- intersect(intersect(cov_Full$SampleID, cov5$SampleID),cov10$SampleID)
 
-All_MGMT_subsample_full <- All_MGMT_Island %>% filter(SampleID %in% List_of_subsampling) %>%
+All_MGMT_subsample_full <- All_MGMT_Island %>% dplyr::filter(SampleID %in% List_of_subsampling) %>%
   dplyr::select(c("SampleID", "Pos", "Methylation_percent")) %>%
   pivot_wider(names_from = Pos, values_from=Methylation_percent) %>%
   column_to_rownames("SampleID")
@@ -89,6 +92,32 @@ colnames(All_MGMT_subsample_full) <- c(1:98)
 colnames(All_MGMT_subsample_10) <- c(1:98)
 colnames(All_MGMT_subsample_5) <- c(1:98)
 
+##################
+MGMT_long_island <- na.omit(MGMT_long_island)
+
+res <- pheatmap(MGMT_long_island,
+                cluster_rows = T,
+                cluster_cols = F,
+                clustering_method = "ward.D",
+                cutree_rows = 2,
+                fontsize_row = 5,
+                scale = "none",
+                drop_levels = T,
+)
+
+MGMT_clusters <- data.frame(cluster=cutree(res$tree_row, k=2))
+
+cl <- factor(MGMT_clusters$cluster)
+
+class_full <- knn(MGMT_long_island, All_MGMT_subsample_full, cl, k = 2, l = 0, prob = FALSE, use.all = TRUE)
+
+class_sub10 <- knn(MGMT_long_island, All_MGMT_subsample_10, cl, k = 2, l = 0, prob = FALSE, use.all = TRUE)
+
+class_sub5 <- knn(MGMT_long_island, All_MGMT_subsample_5, cl, k = 2, l = 0, prob = FALSE, use.all = TRUE)
+
+subsample_knn <- as.data.frame(cbind(class_full, class_sub10, class_sub5))
+
+rownames(subsample_knn) <- rownames(All_MGMT_subsample_full)
 
 ###### clustering
 
