@@ -25,7 +25,7 @@ names(Subsample5) <- c("SampleID", "Pos", "Valid_cov", "Methylation_percent", "N
 Subsample5$Methylation_percent <- as.numeric(Subsample5$Methylation_percent)
 
 # Extract the 98 CpG sites in the MGMT CpG island
-Subsample_Island_5 <- All_MGMT %>% dplyr::filter(between(Pos, 129466683, 129467448))
+Subsample_Island_5 <- Subsample5 %>% dplyr::filter(between(Pos, 129466683, 129467448))
 
 # Calculate mean and median coverage of each CpG site
 cov5 <- Subsample_Island_5 %>% 
@@ -71,27 +71,43 @@ cov_Full <- cov %>% filter(MED_cov > 19)
 # Get a list of all samples that have high readcount in the full list and are also represented in the subsampled files
 #####################
 
-List_of_subsampling <- intersect(intersect(cov_Full$SampleID, cov5$SampleID),cov10$SampleID)
+List_of_subsampling <- intersect(intersect(cov5$SampleID,cov10$SampleID), cov_Full$SampleID)
 
-All_MGMT_subsample_full <- All_MGMT_Island %>% dplyr::filter(SampleID %in% List_of_subsampling) %>%
+All_MGMT_subsample_full <- All_MGMT_Island %>%
+  dplyr::filter(SampleID %in% List_of_subsampling) %>%
   dplyr::select(c("SampleID", "Pos", "Methylation_percent")) %>%
   pivot_wider(names_from = Pos, values_from=Methylation_percent) %>%
   column_to_rownames("SampleID")
+# %>%
+#   na.omit()
 
-All_MGMT_subsample_10 <- Subsample_Island_10 %>% filter(SampleID %in% List_of_subsampling) %>%
+All_MGMT_subsample_10 <- Subsample_Island_10 %>% 
+  filter(SampleID %in% List_of_subsampling) %>%
   dplyr::select(c("SampleID", "Pos", "Methylation_percent")) %>%
   pivot_wider(names_from = Pos, values_from=Methylation_percent) %>%
   column_to_rownames("SampleID")
+# %>%
+#   na.omit
 
-All_MGMT_subsample_5 <- Subsample_Island_5 %>% filter(SampleID %in% List_of_subsampling) %>%
+All_MGMT_subsample_5 <- Subsample_Island_5 %>% 
+  filter(SampleID %in% List_of_subsampling) %>%
   dplyr::select(c("SampleID", "Pos", "Methylation_percent")) %>%
   pivot_wider(names_from = Pos, values_from=Methylation_percent) %>%
   column_to_rownames("SampleID")
+# %>%
+#   na.omit()
 
 colnames(All_MGMT_subsample_full) <- c(1:98)
 colnames(All_MGMT_subsample_10) <- c(1:98)
 colnames(All_MGMT_subsample_5) <- c(1:98)
 
+All_MGMT_subsample_10 <- All_MGMT_subsample_10[rownames(All_MGMT_subsample_5),]
+All_MGMT_subsample_full <- All_MGMT_subsample_full[rownames(All_MGMT_subsample_5),]
+
+row_names_to_remove <- c("1501-1502", "T21-270", "T21-326")
+All_MGMT_subsample_5 <- All_MGMT_subsample_5[!(row.names(All_MGMT_subsample_5) %in% row_names_to_remove),]
+All_MGMT_subsample_10 <- All_MGMT_subsample_10[!(row.names(All_MGMT_subsample_10) %in% row_names_to_remove),]
+All_MGMT_subsample_full <- All_MGMT_subsample_full[!(row.names(All_MGMT_subsample_full) %in% row_names_to_remove),]
 ##################
 MGMT_long_island <- na.omit(MGMT_long_island)
 
@@ -119,55 +135,51 @@ subsample_knn <- as.data.frame(cbind(class_full, class_sub10, class_sub5))
 
 rownames(subsample_knn) <- rownames(All_MGMT_subsample_full)
 
-###### clustering
+links2 <- as_tibble(subsample_knn)
 
-res_full <- pheatmap(All_MGMT_subsample_full,
-                cluster_rows = T,
-                cluster_cols = F,
-                clustering_method = "ward.D",
-                cutree_rows = 3,
-                scale = "none",
-                drop_levels = T,
+links2$class_full <- gsub(1, "Full_cluster_1", links2$class_full)
+links2$class_full <- gsub(2, "Full_cluster_2", links2$class_full)
+
+links2$class_sub5 <- gsub(1, "Subsample5_cluster_1", links2$class_sub5)
+links2$class_sub5 <- gsub(2, "Subsample5_cluster_2", links2$class_sub5)
+
+links2$class_sub10 <- gsub(1, "Subsample10_cluster_1", links2$class_sub10)
+links2$class_sub10 <- gsub(2, "Subsample10_cluster_2", links2$class_sub10)
+
+links3 <- links2 %>% unite(First_key, class_full, class_sub10, sep="->", remove = F) %>%
+  unite(Second_key, class_sub10, class_sub5, sep="->", remove = F) %>%
+  select(First_key, Second_key, class_sub5) %>% 
+  gather(Keys, class_sub5) %>%
+  select(class_sub5) %>% group_by(class_sub5) %>% tally(sort = T) %>%
+  separate(class_sub5, c("Source","Target"), sep="->")
+
+colnames(links3)<-c("Source", "Target", "value")
+
+nodes <- data.frame(
+  name=c(as.character(links3$Source), 
+         as.character(links3$Target)) %>% unique()
 )
 
-MGMT_clusters_full <- data.frame(cluster=cutree(res_full$tree_row, k=3))
+links3$IDsource <- match(links3$Source, nodes$name)-1 
+links3$IDtarget <- match(links3$Target, nodes$name)-1
 
-MGMT_clusters_full$SampleID <- rownames(MGMT_clusters_full)
-
-names(MGMT_clusters_full) <- c("cluster_full", "SampleID")
-
-
-res_10 <- pheatmap(All_MGMT_subsample_10,
-                     cluster_rows = T,
-                     cluster_cols = F,
-                     clustering_method = "ward.D",
-                     cutree_rows = 3,
-                     scale = "none",
-                     drop_levels = T,
+sankeyNetwork(Links = links3, Nodes = nodes,
+              Source = "IDsource", Target = "IDtarget",
+              Value = "value", 
+              NodeID = "name",
+              fontSize = 22,
+              fontFamily = "sans-serif",
+              #LinkGroup = "Source", # for coloringthe links
+              NodeGroup = "name",
+              nodeWidth = 15,
+              nodePadding = 15,
+              sinksRight=T,
+              margin = c(top=50,right=0, left=0,bottom=50),
+              iterations = 10,
+              # colourScale = my_colors
+              #colourScale = node_color
+              
 )
-
-MGMT_clusters_10 <- data.frame(cluster=cutree(res_10$tree_row, k=3))
-
-MGMT_clusters_10$SampleID <- rownames(MGMT_clusters_10)
-
-names(MGMT_clusters_10) <- c("cluster_10", "SampleID")
-
-res_5 <- pheatmap(All_MGMT_subsample_5,
-                   cluster_rows = T,
-                   cluster_cols = F,
-                   clustering_method = "ward.D",
-                   cutree_rows = 3,
-                   scale = "none",
-                   drop_levels = T,
-)
-
-MGMT_clusters_5 <- data.frame(cluster=cutree(res_5$tree_row, k=3))
-
-MGMT_clusters_5$SampleID <- rownames(MGMT_clusters_5)
-
-names(MGMT_clusters_5) <- c("cluster_5", "SampleID")
-
-clust_compare <- left_join(MGMT_clusters_full,MGMT_clusters_10) %>% left_join(MGMT_clusters_5)
 
 #####################
 ### FOR STEPWISE ONLY
