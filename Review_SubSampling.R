@@ -2,6 +2,19 @@ library(dplyr)
 library(purrr)
 
 ## Also load MGMT.Rdata from github
+## Make new All_MGMT
+
+files <- list.files(path="../../../MGMT/Export/Recall_modkit_BedMethyl/",  pattern = "methyl.bed", full.names = T)
+
+All_MGMT <- map_df(files, ~read.delim2(.x, header = F) %>% mutate(File = basename(.x)))
+
+All_MGMT$File <- gsub(".cpg.methyl.bed","",All_MGMT$File)
+
+All_MGMT <- All_MGMT %>% select(2,10:19) %>% relocate(11)
+
+names(All_MGMT) <- c("SampleID", "Pos", "Valid_cov", "Methylation_percent", "N_mod", "N_canon", "N_other_mod", "N_delete", "N_fail", "N_diff", "N_nocall")
+
+All_MGMT$Methylation_percent <- as.numeric(All_MGMT$Methylation_percent)
 
 ###############
 ###  Create a single data frame from all the bedmethyl files subsamples to 6 reads (median cov should be 5)
@@ -10,7 +23,7 @@ library(purrr)
 
 #files <- list.files(pattern = '\\.FIVE_reads.methyl.bed$', full.names = F)
 files <- list.files(path="../../../MGMT/Export/SubSampling/6.reads.modbed/",  pattern = "methyl.bed", full.names = T) # for stepwise subsampling
-files <- list.files(path="E:/6.reads.modbed/",  pattern = "methyl.bed", full.names = T)
+#files <- list.files(path="E:/6.reads.modbed/",  pattern = "methyl.bed", full.names = T)
 
 Subsample5 <- map_df(files, ~read.delim2(.x, header = F) %>% mutate(File = basename(.x)))
 
@@ -28,15 +41,15 @@ Subsample5$Methylation_percent <- as.numeric(Subsample5$Methylation_percent)
 Subsample_Island_5 <- Subsample5 %>% dplyr::filter(between(Pos, 129466683, 129467448))
 
 # Calculate mean and median coverage of each CpG site
-cov5 <- Subsample_Island_5 %>% 
-  group_by(SampleID) %>% 
-  summarise(AVG_cov = mean(Valid_cov), MED_cov = median(Valid_cov), Avg_meth = mean(Methylation_percent)) 
+cov5 <- Subsample_Island_5 %>%
+  group_by(SampleID) %>%
+  summarise(AVG_cov = mean(Valid_cov), MED_cov = median(Valid_cov), Avg_meth = mean(Methylation_percent))
 
 ###############
 ####3 Repeat for subsample 11
 
 files <- list.files(path="../../../MGMT/Export/SubSampling/11.reads.modbed",  pattern = "methyl.bed", full.names = T) # for stepwise subsampling
-files <- list.files(path="E:/11.reads.modbed/",  pattern = "methyl.bed", full.names = T) # for stepwise subsampling
+#files <- list.files(path="E:/11.reads.modbed/",  pattern = "methyl.bed", full.names = T) # for stepwise subsampling
 
 
 Subsample10 <- map_df(files, ~read.delim2(.x, header = F) %>% mutate(File = basename(.x)))
@@ -55,9 +68,9 @@ Subsample10$Methylation_percent <- as.numeric(Subsample10$Methylation_percent)
 Subsample_Island_10 <- Subsample10 %>% dplyr::filter(between(Pos, 129466683, 129467448))
 
 # Calculate mean and median coverage of each CpG site
-cov10 <- Subsample_Island_10 %>% 
-  group_by(SampleID) %>% 
-  summarise(AVG_cov = mean(Valid_cov), MED_cov = median(Valid_cov), Avg_meth = mean(Methylation_percent)) 
+cov10 <- Subsample_Island_10 %>%
+  group_by(SampleID) %>%
+  summarise(AVG_cov = mean(Valid_cov), MED_cov = median(Valid_cov), Avg_meth = mean(Methylation_percent))
 
 ######################
 
@@ -81,7 +94,7 @@ All_MGMT_subsample_full <- All_MGMT_Island %>%
 # %>%
 #   na.omit()
 
-All_MGMT_subsample_10 <- Subsample_Island_10 %>% 
+All_MGMT_subsample_10 <- Subsample_Island_10 %>%
   filter(SampleID %in% List_of_subsampling) %>%
   dplyr::select(c("SampleID", "Pos", "Methylation_percent")) %>%
   pivot_wider(names_from = Pos, values_from=Methylation_percent) %>%
@@ -89,7 +102,7 @@ All_MGMT_subsample_10 <- Subsample_Island_10 %>%
 # %>%
 #   na.omit
 
-All_MGMT_subsample_5 <- Subsample_Island_5 %>% 
+All_MGMT_subsample_5 <- Subsample_Island_5 %>%
   filter(SampleID %in% List_of_subsampling) %>%
   dplyr::select(c("SampleID", "Pos", "Methylation_percent")) %>%
   pivot_wider(names_from = Pos, values_from=Methylation_percent) %>%
@@ -109,6 +122,8 @@ All_MGMT_subsample_5 <- All_MGMT_subsample_5[!(row.names(All_MGMT_subsample_5) %
 All_MGMT_subsample_10 <- All_MGMT_subsample_10[!(row.names(All_MGMT_subsample_10) %in% row_names_to_remove),]
 All_MGMT_subsample_full <- All_MGMT_subsample_full[!(row.names(All_MGMT_subsample_full) %in% row_names_to_remove),]
 ##################
+library(class)
+
 MGMT_long_island <- na.omit(MGMT_long_island)
 
 res <- pheatmap(MGMT_long_island,
@@ -148,7 +163,7 @@ links2$class_sub10 <- gsub(2, "Subsample10_cluster_2", links2$class_sub10)
 
 links3 <- links2 %>% unite(First_key, class_full, class_sub10, sep="->", remove = F) %>%
   unite(Second_key, class_sub10, class_sub5, sep="->", remove = F) %>%
-  select(First_key, Second_key, class_sub5) %>% 
+  select(First_key, Second_key, class_sub5) %>%
   gather(Keys, class_sub5) %>%
   select(class_sub5) %>% group_by(class_sub5) %>% tally(sort = T) %>%
   separate(class_sub5, c("Source","Target"), sep="->")
@@ -156,16 +171,16 @@ links3 <- links2 %>% unite(First_key, class_full, class_sub10, sep="->", remove 
 colnames(links3)<-c("Source", "Target", "value")
 
 nodes <- data.frame(
-  name=c(as.character(links3$Source), 
+  name=c(as.character(links3$Source),
          as.character(links3$Target)) %>% unique()
 )
 
-links3$IDsource <- match(links3$Source, nodes$name)-1 
+links3$IDsource <- match(links3$Source, nodes$name)-1
 links3$IDtarget <- match(links3$Target, nodes$name)-1
 
 sankeyNetwork(Links = links3, Nodes = nodes,
               Source = "IDsource", Target = "IDtarget",
-              Value = "value", 
+              Value = "value",
               NodeID = "name",
               fontSize = 22,
               fontFamily = "sans-serif",
@@ -178,7 +193,7 @@ sankeyNetwork(Links = links3, Nodes = nodes,
               iterations = 10,
               # colourScale = my_colors
               #colourScale = node_color
-              
+
 )
 
 #####################
@@ -237,10 +252,10 @@ pheatmap(Subsample_long_island_GBM,
          annotation_row = row_anno_GBM,
          annotation_colors = ann_colors,
          legend_labels = c("0%","10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%")
-         
+
 )
 
-# Pull all matching samples from MGMT_long_Island that are represented in subsample long island
+# Pull all matching samples from MGMT_long_island that are represented in subsample long island
 
 MGMT_matching <- MGMT_long_island[rownames(Subsample_long_island),]
 
