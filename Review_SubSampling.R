@@ -2,6 +2,19 @@ library(dplyr)
 library(purrr)
 
 ## Also load MGMT.Rdata from github
+## Make new All_MGMT
+
+files <- list.files(path="../../../MGMT/Export/Recall_modkit_BedMethyl/",  pattern = "methyl.bed", full.names = T)
+
+All_MGMT <- map_df(files, ~read.delim2(.x, header = F) %>% mutate(File = basename(.x)))
+
+All_MGMT$File <- gsub(".cpg.methyl.bed","",All_MGMT$File)
+
+All_MGMT <- All_MGMT %>% select(2,10:19) %>% relocate(11)
+
+names(All_MGMT) <- c("SampleID", "Pos", "Valid_cov", "Methylation_percent", "N_mod", "N_canon", "N_other_mod", "N_delete", "N_fail", "N_diff", "N_nocall")
+
+All_MGMT$Methylation_percent <- as.numeric(All_MGMT$Methylation_percent)
 
 ###############
 ###  Create a single data frame from all the bedmethyl files subsamples to 6 reads (median cov should be 5)
@@ -10,7 +23,7 @@ library(purrr)
 
 #files <- list.files(pattern = '\\.FIVE_reads.methyl.bed$', full.names = F)
 files <- list.files(path="../../../MGMT/Export/SubSampling/6.reads.modbed/",  pattern = "methyl.bed", full.names = T) # for stepwise subsampling
-files <- list.files(path="E:/6.reads.modbed/",  pattern = "methyl.bed", full.names = T)
+#files <- list.files(path="E:/6.reads.modbed/",  pattern = "methyl.bed", full.names = T)
 
 Subsample5 <- map_df(files, ~read.delim2(.x, header = F) %>% mutate(File = basename(.x)))
 
@@ -25,7 +38,7 @@ names(Subsample5) <- c("SampleID", "Pos", "Valid_cov", "Methylation_percent", "N
 Subsample5$Methylation_percent <- as.numeric(Subsample5$Methylation_percent)
 
 # Extract the 98 CpG sites in the MGMT CpG island
-Subsample_Island_5 <- All_MGMT %>% dplyr::filter(between(Pos, 129466683, 129467448))
+Subsample_Island_5 <- Subsample5 %>% dplyr::filter(between(Pos, 129466683, 129467448))
 
 # Calculate mean and median coverage of each CpG site
 cov5 <- Subsample_Island_5 %>% 
@@ -36,7 +49,7 @@ cov5 <- Subsample_Island_5 %>%
 ####3 Repeat for subsample 11
 
 files <- list.files(path="../../../MGMT/Export/SubSampling/11.reads.modbed",  pattern = "methyl.bed", full.names = T) # for stepwise subsampling
-files <- list.files(path="E:/11.reads.modbed/",  pattern = "methyl.bed", full.names = T) # for stepwise subsampling
+#files <- list.files(path="E:/11.reads.modbed/",  pattern = "methyl.bed", full.names = T) # for stepwise subsampling
 
 
 Subsample10 <- map_df(files, ~read.delim2(.x, header = F) %>% mutate(File = basename(.x)))
@@ -92,7 +105,14 @@ colnames(All_MGMT_subsample_full) <- c(1:98)
 colnames(All_MGMT_subsample_10) <- c(1:98)
 colnames(All_MGMT_subsample_5) <- c(1:98)
 
+# remove rows with missing values from all data
+ All_MGMT_subsample_5 <- na.omit(All_MGMT_subsample_5)
+ All_MGMT_subsample_full <- All_MGMT_subsample_full[rownames(All_MGMT_subsample_5),]
+ All_MGMT_subsample_10 <- All_MGMT_subsample_10[rownames(All_MGMT_subsample_5),]
+
 ##################
+library(class)
+
 MGMT_long_island <- na.omit(MGMT_long_island)
 
 res <- pheatmap(MGMT_long_island,
@@ -228,7 +248,7 @@ pheatmap(Subsample_long_island_GBM,
          
 )
 
-# Pull all matching samples from MGMT_long_Island that are represented in subsample long island
+# Pull all matching samples from MGMT_long_island that are represented in subsample long island
 
 MGMT_matching <- MGMT_long_island[rownames(Subsample_long_island),]
 
