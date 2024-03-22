@@ -150,6 +150,9 @@ subsample_knn <- as.data.frame(cbind(class_full, class_sub10, class_sub5))
 
 rownames(subsample_knn) <- rownames(All_MGMT_subsample_full)
 
+################ Sankey plot of subsample clustering results
+library(networkD3)
+
 links2 <- as_tibble(subsample_knn)
 
 links2$class_full <- gsub(1, "Full_cluster_1", links2$class_full)
@@ -174,27 +177,155 @@ nodes <- data.frame(
   name=c(as.character(links3$Source),
          as.character(links3$Target)) %>% unique()
 )
+nodes$cluster <- c(" ", "Cluster_1","Cluster_2"," "," ","")
 
 links3$IDsource <- match(links3$Source, nodes$name)-1
 links3$IDtarget <- match(links3$Target, nodes$name)-1
+
+my_color <- 'd3.scaleOrdinal() .domain(["Full_cluster_1", "Subsample10_cluster_1","Subsample5_cluster_1", "Full_cluster_2", "Subsample10_cluster_2","Subsample5_cluster_2"]) .range(["#377EB8", "#377EB8" , "#377EB8", "#E41A1C", "#E41A1C", "#E41A1C"])'
 
 sankeyNetwork(Links = links3, Nodes = nodes,
               Source = "IDsource", Target = "IDtarget",
               Value = "value",
               NodeID = "name",
-              fontSize = 22,
+              fontSize = 0,
               fontFamily = "sans-serif",
               #LinkGroup = "Source", # for coloringthe links
               NodeGroup = "name",
+              #NodeID = "cluster",
               nodeWidth = 15,
               nodePadding = 15,
               sinksRight=T,
-              margin = c(top=50,right=0, left=0,bottom=50),
+              margin = c(top=150,right=0, left=0,bottom=150),
               iterations = 10,
-              # colourScale = my_colors
+              colourScale = my_color
               #colourScale = node_color
 
 )
+
+###############################
+######## MGMT-Pyro regression model with subsampling
+##############################
+
+# Using the regression model built in Nano-MGMT-Figures.NOV23.Rmd
+
+# Extract the CpG sites that correspond to the MGMT Pyro kit sites
+All_MGMT_Pyro_FULL <- All_MGMT %>% filter(between(Pos, 129467253, 129467272)) %>% select(1:4)
+
+All_MGMT_Pyro_sub10 <- Subsample_Island_10 %>% filter(between(Pos, 129467253, 129467272)) %>% select(1:4)
+
+All_MGMT_Pyro_sub5 <- Subsample_Island_5 %>% filter(between(Pos, 129467253, 129467272)) %>% select(1:4)
+
+### Make sure to only include samples represented in every dataset
+
+List_of_subsampling_Pyro <- intersect(intersect(All_MGMT_Pyro_FULL$SampleID,All_MGMT_Pyro_sub10$SampleID), All_MGMT_Pyro_sub5$SampleID)
+
+
+
+#make test data
+test_full <- All_MGMT_Pyro_FULL %>% 
+  filter(SampleID %in% List_of_subsampling_Pyro) %>%
+  group_by(SampleID) %>% 
+  summarise(Average_Nano=mean(Methylation_percent))%>%
+  select(SampleID, Average_Nano)
+
+test_sub10 <- All_MGMT_Pyro_sub10 %>% 
+  filter(SampleID %in% List_of_subsampling_Pyro) %>%
+  group_by(SampleID) %>% 
+  summarise(Average_Nano=mean(Methylation_percent))%>%
+  select(SampleID, Average_Nano)
+
+test_sub5 <- All_MGMT_Pyro_sub5 %>% 
+  filter(SampleID %in% List_of_subsampling_Pyro) %>%
+  group_by(SampleID) %>% 
+  summarise(Average_Nano=mean(Methylation_percent))%>%
+  select(SampleID, Average_Nano)
+
+# Run the prediction based on the average methylation cut-off of 23% methylated
+
+test_full$Predicted <- ifelse(test_full$Average_Nano >= 23, "Methylated", "Unmethylated")
+test_full$prob <- predict(model, test_full, type = "response")
+
+test_sub10$Predicted <- ifelse(test_sub10$Average_Nano >= 23, "Methylated", "Unmethylated")
+test_sub10$prob <- predict(model, test_sub10, type = "response")
+
+test_sub5$Predicted <- ifelse(test_sub5$Average_Nano >= 23, "Methylated", "Unmethylated")
+test_sub5$prob <- predict(model, test_sub5, type = "response")
+
+subsample_pyro <- as.data.frame(cbind(test_full$SampleID, test_full$Predicted, test_sub10$Predicted, test_sub5$Predicted))
+
+names(subsample_pyro) <- c("SampleID", "Predict_full", "Predict_sub10", "Predict_sub5")
+
+subsample_pyro <- subsample_pyro %>% filter(SampleID %in% List_of_subsampling) %>%
+  select(c(Predict_full,Predict_sub10,Predict_sub5))
+
+################
+#### Sankey for MGMT-Pyro regression model results
+#############
+
+################ Sankey plot of subsample clustering results
+links <- as_tibble(subsample_pyro)
+
+links$Predict_full <- gsub("Methylated", "Full_Methylated", links$Predict_full)
+links$Predict_full <- gsub("Unmethylated", "Full_Unmethylated", links$Predict_full)
+
+links$Predict_sub5 <- gsub("Methylated", "Subsample5_Methylated", links$Predict_sub5)
+links$Predict_sub5 <- gsub("Unmethylated", "Subsample5_Unmethylated", links$Predict_sub5)
+
+links$Predict_sub10 <- gsub("Methylated", "Subsample10_Methylated", links$Predict_sub10)
+links$Predict_sub10 <- gsub("Unmethylated", "Subsample10_Unmethylated", links$Predict_sub10)
+
+links <- links %>% unite(First_key, Predict_full, Predict_sub10, sep="->", remove = F) %>%
+  unite(Second_key, Predict_sub10, Predict_sub5, sep="->", remove = F) %>%
+  select(First_key, Second_key, Predict_sub5) %>%
+  gather(Keys, Predict_sub5) %>%
+  select(Predict_sub5) %>% group_by(Predict_sub5) %>% tally(sort = T) %>%
+  separate(Predict_sub5, c("Source","Target"), sep="->")
+
+colnames(links)<-c("Source", "Target", "value")
+
+nodes <- data.frame(
+  name=c(as.character(links$Source),
+         as.character(links$Target)) %>% unique()
+)
+
+links$IDsource <- match(links$Source, nodes$name)-1
+links$IDtarget <- match(links$Target, nodes$name)-1
+
+my_color <- 'd3.scaleOrdinal() .domain([
+"Full_Unmethylated", 
+"Subsample10_Unmethylated",
+"Full_Methylated", 
+"Subsample10_Methylated", 
+"Subsample5_Unmethylated",
+"Subsample5_Methylated"]) 
+.range([
+"#377EB8",
+"#377EB8",
+"#E41A1C",
+"#E41A1C",
+"#377EB8",
+"#E41A1C"])'
+
+sankeyNetwork(Links = links, Nodes = nodes,
+              Source = "IDsource", Target = "IDtarget",
+              Value = "value",
+              NodeID = "name",
+              fontSize = 0,
+              fontFamily = "sans-serif",
+              #LinkGroup = "Source", # for coloringthe links
+              NodeGroup = "name",
+              #NodeID = "cluster",
+              nodeWidth = 15,
+              nodePadding = 15,
+              sinksRight=T,
+              margin = c(top=150,right=0, left=0,bottom=150),
+              iterations = 10,
+              colourScale = my_color
+              #colourScale = node_color
+              
+)
+
 
 #####################
 ### FOR STEPWISE ONLY
