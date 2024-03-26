@@ -652,7 +652,7 @@ dotplot <- x2  %>%
 
 dotplot$CpG_row <- as.integer(rep(c(1:98),2))
 
-regions <- tibble(x1 = 75.5, x2 = 79.5, y1 = -10, y2 = 99, y3 =90, x3 = 31, y4 = 90, x4 = 84)
+regions <- tibble(x1 = 75.5, x2 = 79.5, y1 = -10, y2 = 99, y3 =90, x3 = 31, y4 = 95, x4 = 84)
 
 ggplot(dotplot, aes(x=CpG_row, y=Average_Methylation, group=Known_status))+
   geom_rect(data = regions,   # make a transparent box around the MGMT Pyro sites
@@ -678,7 +678,7 @@ ggplot(dotplot, aes(x=CpG_row, y=Average_Methylation, group=Known_status))+
 ######################################################
 ### t-test for every CpG
 
-CpGs <- as.factor(x3$CpG)
+CpGs <- as.factor(dotplot$CpG)
 
 P_list <- lapply(x2[,CpGs], function(x) t.test(x ~ x2$Known_status, var.equal = FALSE)$p.value)
 P_frame <- as.data.frame(unlist(P_list))
