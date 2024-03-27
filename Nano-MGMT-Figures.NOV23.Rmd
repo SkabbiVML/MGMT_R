@@ -672,7 +672,7 @@ ggplot(dotplot, aes(x=CpG_row, y=Average_Methylation, group=Known_status))+
   geom_line(aes(color=Known_status))+
   scale_x_continuous(limits = c(0,99),breaks = c(1,10,20,30,40,50,60,70,80,90,98))+
     #geom_smooth(aes(color=Known_status), show.legend = FALSE)+
-  theme_bw(base_size = 12)+
+  theme_bw(base_size = 14)+
   theme(legend.position="top", aspect.ratio = 0.15)
 
 ######################################################
