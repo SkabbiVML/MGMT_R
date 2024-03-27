@@ -652,7 +652,7 @@ dotplot <- x2  %>%
 
 dotplot$CpG_row <- as.integer(rep(c(1:98),2))
 
-regions <- tibble(x1 = 75.5, x2 = 79.5, y1 = -10, y2 = 99, y3 =90, x3 = 31, y4 = 95, x4 = 84)
+regions <- tibble(x1 = 75.5, x2 = 79.5, y1 = -10, y2 = 99, y3 =75, x3 = 31, y4 = 85, x4 = 84)
 
 ggplot(dotplot, aes(x=CpG_row, y=Average_Methylation, group=Known_status))+
   geom_rect(data = regions,   # make a transparent box around the MGMT Pyro sites
@@ -662,9 +662,9 @@ ggplot(dotplot, aes(x=CpG_row, y=Average_Methylation, group=Known_status))+
             color = "transparent",
             fill = "black",
             alpha = .2)+
-  geom_text(mapping = aes(y=75,x=31), label = "*", size = 10)+ # mark the two STP27 sites 
-  geom_text(mapping = aes(y=80,x=84), label = "*", size = 10)+
   geom_point(aes(color=Known_status), position = position_dodge(width = 0.9), size = 2)+
+  geom_text(mapping = aes(y=75,x=31), label = "*", size = 10)+ # mark the two STP27 sites
+  geom_text(mapping = aes(y=87,x=84), label = "*", size = 10)+
   geom_linerange(aes(ymin=Average_Methylation-SD_Methylation, ymax=Average_Methylation+SD_Methylation,color=Known_status),position = position_dodge(width = 0.9))+
   scale_color_brewer(palette = "Set1", name = "Known status")+
   ylab("Average methylation (%)")+
@@ -695,7 +695,7 @@ regions <- tibble(x1 = 75.5, x2 = 79.5, y1 = 1e-25, y2 = 5, y3 =0.00001, x3 = 31
 
 
 ggplot(P_frame, aes(x=CpG, y=adj.p.val))+
-  geom_point(size = 4)+
+  geom_point(size = 3)+
   geom_rect(data = regions,   # make a transparent box around the MGMT Pyro sites
             inherit.aes = FALSE,
             mapping = aes(xmin = x1, xmax = x2,
@@ -711,7 +711,7 @@ ggplot(P_frame, aes(x=CpG, y=adj.p.val))+
   scale_y_continuous(trans = 'log10')+
   scale_x_continuous(breaks = c(1,10,20,30,40,50,60,70,80,90,98))+
   geom_hline(yintercept = 0.01)+  
-  theme_bw(base_size = 12)+
+  theme_bw(base_size = 14)+
   theme(aspect.ratio = 0.15)
 
 ```
